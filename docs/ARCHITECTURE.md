@@ -10,7 +10,7 @@
 |---|---|---|
 | State Management | Riverpod 3.x (`Notifier` / `AsyncNotifier`) | API moderna, DI integrata, testabilità |
 | Dependency Injection | Riverpod Providers | Nessun container esterno |
-| Code Generation | `riverpod_generator` + `build_runner` | Riduzione boilerplate, type-safety |
+| Code Generation | No Code Generation — Manual `Notifier` / `AsyncNotifier` pattern | Massima stabilità e compatibilità analyzer (riverpod_generator 4.x incompatibile con Flutter SDK 3.38.5) |
 | Audio Capture | `MethodChannel` + `EventChannel` custom (Kotlin) | Controllo totale, zero dipendenze fragili |
 | Overlay | `MethodChannel` custom → `WindowManager` (Kotlin) | Compatibilità SDK 33+ |
 | Font | Google Fonts — **Antonio** | Identità visiva LCARS |

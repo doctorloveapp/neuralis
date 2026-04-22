@@ -206,7 +206,7 @@
 - [ ] `wavefront.frag` completo: mesh wireframe 3D, displacement, rotazione, aberrazione cromatica
 - [ ] Uniforms aggiornati ogni frame
 - [ ] Transizione colore blueGray → atomic sui picchi FFT
-- [ ] `pubspec.yaml`: shader registrato in `flutter.shaders`
+- [x] `pubspec.yaml`: shader registrato in `flutter.shaders`
 - [ ] Riverpod provider: `shaderProvider` (AsyncNotifier)
 - [ ] Test: `ShaderRepository.init()` non lancia eccezioni, shader non null dopo warm-up
 
@@ -301,7 +301,7 @@ mocktail: ^1.0.4 (dev)
 
 - [ ] `AppLifecycleObserver` con tutti e 3 gli stati lifecycle
 - [ ] Dispose chain completa e ordinata
-- [ ] `pubspec.yaml` finalizzato e verificato
+- [x] `pubspec.yaml` finalizzato e verificato (`flutter pub get` OK)
 - [ ] `MetadataRepository` abstract class predisposta
 - [ ] `splash_logo.png` generato da `logo_neuralis.png`
 - [ ] App icon configurata con `logo_neuralis.png`
