@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "Neuralis",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "systemActive": "Neuralis — System Active",
+  "@systemActive": {
+    "description": "Foreground service notification title"
+  }
+}

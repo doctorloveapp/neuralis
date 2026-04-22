@@ -1,0 +1,49 @@
+name: neuralis
+description: Neural LCARS Overlay System
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # i18n — Internazionalizzazione (EN + IT)
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+  # State Management + DI — unica soluzione approvata
+  flutter_riverpod: ^3.3.1
+
+  # Font 'Antonio' — Identità visiva LCARS
+  google_fonts: ^8.0.2
+
+  # Runtime permissions Android
+  permission_handler: ^12.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Mock per unit test
+  mocktail: ^1.0.4
+  # NOTE: riverpod_generator e build_runner rimossi per conflitto analyzer
+  # con Flutter SDK 3.38.5. I pattern Notifier/AsyncNotifier di Riverpod 3.x
+  # hanno boilerplate minimo e non richiedono code generation.
+
+# ⛔ VIETATO aggiungere: flutter_audio_visualizer, system_alert_window,
+#    o qualsiasi pacchetto nativo non elencato sopra.
+#    Tutta la comunicazione nativa è custom via MethodChannel/EventChannel.
+
+flutter:
+  generate: true
+
+  shaders:
+    - assets/shaders/wavefront.frag
+
+  assets:
+    - assets/shaders/
+    - assets/images/

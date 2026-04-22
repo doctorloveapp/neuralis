@@ -1,0 +1,258 @@
+# ─────────────────────────────────────────────
+# NEURALIS — .gitignore professionale
+# Flutter + Android + Kotlin + Windows + IDE
+# ─────────────────────────────────────────────
+
+
+# ══════════════════════════════════════════════
+# FLUTTER / DART
+# ══════════════════════════════════════════════
+
+# Cartelle build Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# File generati da gen-l10n (flutter generate)
+# Includi i file .arb ma escludi il codice generato
+lib/generated/
+lib/gen_l10n/
+
+# File generati da build_runner
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Dart pubspec lock è incluso (best practice per app, escluso per lib)
+# pubspec.lock ← lasciato tracciato intenzionalmente
+
+# Coverage test
+coverage/
+lcov.info
+
+# Profiling Flutter
+*.devtools_options
+
+
+# ══════════════════════════════════════════════
+# ANDROID
+# ══════════════════════════════════════════════
+
+# Gradle build
+**/android/.gradle/
+**/android/gradle/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/GeneratedPluginRegistrant.java
+**/android/GeneratedPluginRegistrant.kt
+**/android/app/google-services.json
+**/android/**/build/
+**/android/**/.cxx/
+android/captures/
+
+# Keystore e firma — MAI committare le chiavi!
+*.jks
+*.keystore
+key.properties
+android/key.properties
+android/app/upload-keystore.jks
+android/app/release.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/runConfigurations/
+
+
+# ══════════════════════════════════════════════
+# KOTLIN / JAVA
+# ══════════════════════════════════════════════
+
+*.class
+*.jar
+*.aar
+*.ap_
+*.dex
+
+
+# ══════════════════════════════════════════════
+# XCODE / IOS / MACOS (non usato in questo progetto
+# ma incluso per sicurezza se si dovesse espandere)
+# ══════════════════════════════════════════════
+
+*.xcworkspace
+*.pbxproj
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/GeneratedPluginRegistrant.*
+**/macos/Flutter/ephemeral/
+
+
+# ══════════════════════════════════════════════
+# AMBIENTE E SEGRETI
+# ══════════════════════════════════════════════
+
+# Variabili d'ambiente — NON committare mai credenziali
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+.secret
+.secret.local
+secrets.dart
+secrets/
+config/secrets.yaml
+
+# Google Services
+google-services.json
+GoogleService-Info.plist
+
+
+# ══════════════════════════════════════════════
+# EDITOR — VS CODE
+# ══════════════════════════════════════════════
+
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-snippets
+.history/
+
+# Tieni tracciato solo .vscode/extensions.json consigliato (commentato = non tracciato)
+# .vscode/extensions.json
+
+
+# ══════════════════════════════════════════════
+# EDITOR — INTELLIJ / ANDROID STUDIO
+# ══════════════════════════════════════════════
+
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/modules.xml
+.idea/libraries/
+.idea/runConfigurations/
+
+
+# ══════════════════════════════════════════════
+# SISTEMA OPERATIVO — WINDOWS
+# ══════════════════════════════════════════════
+
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+
+# ══════════════════════════════════════════════
+# SISTEMA OPERATIVO — MACOS
+# ══════════════════════════════════════════════
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+
+# ══════════════════════════════════════════════
+# SISTEMA OPERATIVO — LINUX
+# ══════════════════════════════════════════════
+
+*~
+.nfs*
+
+
+# ══════════════════════════════════════════════
+# LOGS E TEMPORANEI
+# ══════════════════════════════════════════════
+
+*.log
+*.log.*
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# File temporanei editor
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+*~
+
+
+# ══════════════════════════════════════════════
+# NODE (non usato ma presente per tool di toolchain)
+# ══════════════════════════════════════════════
+
+**/node_modules/
+package-lock.json
+yarn.lock
+
+
+# ══════════════════════════════════════════════
+# PYTHON (non usato ma per script di build ausiliari)
+# ══════════════════════════════════════════════
+
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+dist/
+
+
+# ══════════════════════════════════════════════
+# DOCUMENTI INTERNI (cartella locale non da committare)
+# ══════════════════════════════════════════════
+
+documenti/
+
+
+# ══════════════════════════════════════════════
+# ALTRI
+# ══════════════════════════════════════════════
+
+# Atom editor
+.atom/
+
+# Swift Package Manager
+.swiftpm/
+
+# Buildlog
+.buildlog/
+.build/
+
+# SVN
+.svn/

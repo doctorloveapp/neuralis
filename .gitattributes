@@ -1,0 +1,27 @@
+# Normalizza line endings: checkout Windows-style (CRLF), commit Unix-style (LF)
+* text=auto eol=lf
+
+# File binari — nessuna conversione
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.jar binary
+*.aar binary
+*.keystore binary
+*.jks binary
+*.frag text eol=lf
+*.vert text eol=lf
+*.glsl text eol=lf
+*.arb text eol=lf
+*.yaml text eol=lf
+*.kt text eol=lf
+*.dart text eol=lf
+*.md text eol=lf
+*.xml text eol=lf
+*.gradle text eol=lf
+*.kts text eol=lf
+*.json text eol=lf
+*.lock text eol=lf
