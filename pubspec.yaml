@@ -28,6 +28,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Lint rules — richiesto da analysis_options.yaml
+  flutter_lints: ^5.0.0
+
   # Mock per unit test
   mocktail: ^1.0.4
   # NOTE: riverpod_generator e build_runner rimossi per conflitto analyzer

@@ -31,7 +31,7 @@
 
 - [x] Creare `ROADMAP.md` completo
 - [x] Creare `docs/ARCHITECTURE.md` con tabella decisioni e struttura cartelle
-- [ ] Definire tutte le interfacce astratte (`abstract class`) dei Service prima di qualsiasi implementazione
+- [x] Definire tutte le interfacce astratte (`abstract class`) dei Service prima di qualsiasi implementazione
 - [x] Configurare struttura cartelle Clean Architecture
 - [x] Configurare i18n (`l10n.yaml`, `app_en.arb`, `app_it.arb`)
 
@@ -313,7 +313,7 @@ mocktail: ^1.0.4 (dev)
 
 | Sezione | Stato | Note |
 |---|---|---|
-| Sezione 0 — Architettura | 🔄 In corso | ROADMAP ✅, ARCHITECTURE ✅, Cartelle ✅, i18n ✅, pubspec ✅ — mancano interfacce |
+| Sezione 0 — Architettura | ✅ Completata | ROADMAP ✅, ARCHITECTURE ✅, Cartelle ✅, i18n ✅, pubspec ✅, Interfacce ✅ |
 | Sezione 1 — Infrastruttura | ⬜ Non iniziata | |
 | Sezione 2 — Audio Engine | ⬜ Non iniziata | |
 | Sezione 3 — LCARS Design | ⬜ Non iniziata | |
