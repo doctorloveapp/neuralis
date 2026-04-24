@@ -72,5 +72,5 @@ flutter:
     - assets/shaders/wavefront.frag
 
   assets:
-    - assets/shaders/
     - assets/images/
+
