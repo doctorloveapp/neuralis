@@ -6,6 +6,7 @@ library;
 
 import 'dart:ui' show Offset;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,20 +104,43 @@ class ShaderNotifier extends AsyncNotifier<ShaderState> {
   }
 
   /// Aggiorna le bande FFT correnti (chiamato dall'AudioNotifier).
+  /// Difesa in profondità: clampa ogni banda in [0.0, 1.0] e
+  /// valida che la lista abbia esattamente 32 elementi.
   void updateAudio(List<double> bands) {
     final current = state.asData?.value;
     if (current == null || !current.isLoaded) return;
+
+    // Validazione lunghezza: se non 32, padding/troncamento silenzioso
+    List<double> safeBands;
+    if (bands.length == 32) {
+      safeBands = bands;
+    } else {
+      debugPrint('[ShaderNotifier] updateAudio: attese 32 bande, ricevute ${bands.length}');
+      safeBands = List<double>.generate(
+        32,
+        (i) => i < bands.length ? bands[i].clamp(0.0, 1.0) : 0.0,
+        growable: false,
+      );
+    }
+
     state = AsyncData(current.copyWith(
-      uniforms: current.uniforms.copyWith(audioFrequency: bands),
+      uniforms: current.uniforms.copyWith(audioFrequency: safeBands),
     ));
   }
 
   /// Aggiorna il vettore di bending (chiamato dall'InteractionController S5).
+  /// Difesa in profondità: clampa entrambi gli assi in [-1.0, 1.0].
   void updateBending(Offset bending) {
     final current = state.asData?.value;
     if (current == null) return;
+
+    final clampedBending = Offset(
+      bending.dx.clamp(-1.0, 1.0),
+      bending.dy.clamp(-1.0, 1.0),
+    );
+
     state = AsyncData(current.copyWith(
-      uniforms: current.uniforms.copyWith(bending: bending),
+      uniforms: current.uniforms.copyWith(bending: clampedBending),
     ));
   }
 

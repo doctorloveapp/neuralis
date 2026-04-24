@@ -279,12 +279,25 @@ InteractionState:
 
 ### Task
 
-- [ ] `InteractionController` con `InteractionState` — zero dipendenze UI
-- [ ] `BassPad` widget con curva esponenziale gain e ease-out (300ms)
-- [ ] `NavPad` widget con GestureDetector, normalizzazione delta, ease-out (500ms)
-- [ ] Feedback visivo BassPad: colore proporzionale al gain
-- [ ] Riverpod provider: `interactionProvider` (Notifier)
-- [ ] Stringhe i18n per label pad
+- [x] `InteractionController` con `InteractionState` — zero dipendenze UI
+  - `lib/features/interaction/presentation/interaction_controller.dart`
+  - Ticker frame-accurate (SchedulerBinding) per ease-out fluido
+  - `bassGain` [1.0, 3.0]: salita esponenziale (4.5x/s), discesa ease-out (300ms)
+  - `bending` (X+Y) [-1.0, 1.0]: ease-out verso zero in ~450ms
+  - `HapticFeedback.lightImpact()` su press/release, `selectionClick()` su swipe
+- [x] `BassPad` widget con curva esponenziale gain e ease-out (300ms)
+  - `onLongPressStart`/`onLongPressEnd` + `onTapDown`/`onTapUp` per burst brevi
+  - Colore: `blueGray → atomic` via `Color.lerp` proporzionale al gain
+  - `Consumer` + `ref.select(s.bassGain)` → rebuild selettivo (no full Dashboard)
+- [x] `NavPad` widget con GestureDetector, normalizzazione delta, ease-out (450ms)
+  - `onPanUpdate`: `delta.dx / padWidth`, `delta.dy / padHeight` → clampa [-1.0, 1.0]
+  - Feedback visivo: bordo/sfondo `blueGray → purple` quando `isBending == true`
+  - `Consumer` + `ref.select(s.isBending)` → rebuild selettivo
+- [x] Riverpod provider: `interactionControllerProvider` in `providers.dart`
+- [x] Routing FFT → Shader: `AudioNotifier._routeToShader()` applica bassGain alle bande 0–7
+- [x] Shader warm-up al boot: `app.dart` `_continueWithAudio()` → `ShaderNotifier.initialize()`
+- [x] Audio start al boot: `app.dart` → `AudioNotifier.startCapture(AudioCaptureMode.external)`
+- [x] Routing bending → Shader: `InteractionController._onTick()` → `ShaderNotifier.updateBending()`
 - [ ] Unit test:
   - [ ] Mapping swipe → bending normalizzato
   - [ ] Gain range `[0.5, 3.0]` non superabile
@@ -409,7 +422,7 @@ per evitare ambiguità tra `Job.isActive` e `CoroutineScope.isActive` in suspend
 | Sezione 2 — Audio Engine | ✅ Completata | NativeAudioCapture ✅, FFT+RMS ✅, Repository ✅, Notifier ✅ |
 | Sezione 3 — LCARS Design | ✅ Completata | Colori ✅, Tipografia ✅, Tema ✅, Elbow ✅, Button ✅, StatusBar ✅, Banner ✅, Dashboard ✅, SafeArea ✅ |
 | Sezione 4 — Shader Engine | ✅ Completata | wavefront.frag ✅, ShaderRepo ✅, WavefrontPainter ✅, ShaderNotifier ✅, WavefrontWidget ✅ |
-| Sezione 5 — Interazione | ⬜ Non iniziata | Prossimo step |
+| Sezione 5 — Interazione | ✅ Completata | InteractionController ✅, BassPad ✅, NavPad ✅, FFT→Shader ✅, Bending→Shader ✅ |
 | Sezione 6 — Lifecycle | 🔄 In corso | App Icon ✅, Launcher Icons ✅, Lifecycle Observer ⬜ |
 | Build & Deploy | ✅ Stabile | APK debug funzionante su Samsung S911B |
 
@@ -427,10 +440,15 @@ per evitare ambiguità tra `Job.isActive` e `CoroutineScope.isActive` in suspend
 | SafeArea rispettata (top/bottom) | ✅ Fixato |
 | Crash `AudioCaptureMode.name` | ✅ Risolto (direct enum comparison) |
 | Overflow 99793px | ✅ Risolto (SizedBox.expand + IntrinsicWidth) |
-| Shader GLSL wavefront | 🔄 Loading (initialize() non chiamato — Sezione 5) |
-| Audio capture stream | ✅ EventChannel attivo |
+| Shader GLSL wavefront | ✅ Inizializzato al boot (ShaderNotifier.initialize) |
+| Audio capture stream | ✅ Avviato al boot (AudioCaptureMode.external) |
+| FFT → ShaderNotifier routing | ✅ AudioNotifier._routeToShader() |
+| BassGain → shader bands 0–7 | ✅ Applicato in _routeToShader() |
+| Bending → shader uBending | ✅ InteractionController._onTick() |
+| BassPad elastico | ✅ ease-out 300ms via Ticker |
+| NavPad elastico | ✅ ease-out 450ms via Ticker |
 
 ---
 
 *Neuralis — Neural LCARS Overlay System*
-*Roadmap V.1.3 — Aggiornata 2026-04-24 — Build-Ready su Samsung S911B*
+*Roadmap V.1.4 — Aggiornata 2026-04-24 — Sezione 5 Completata*

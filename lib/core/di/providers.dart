@@ -10,6 +10,7 @@ import '../../features/audio_engine/data/repositories/audio_capture_repository_i
 import '../../features/audio_engine/domain/repositories/audio_capture_repository.dart';
 import '../../features/audio_engine/presentation/audio_notifier.dart';
 import '../../features/audio_engine/presentation/audio_state.dart';
+import '../../features/interaction/presentation/interaction_controller.dart';
 import '../../features/overlay_ui/presentation/notifiers/overlay_notifier.dart';
 import '../../features/overlay_ui/presentation/states/overlay_state.dart';
 import '../../features/shader_engine/data/repositories/shader_repository_impl.dart';
@@ -71,4 +72,15 @@ final shaderNotifierProvider =
     AsyncNotifierProvider<ShaderNotifier, ShaderState>(
   ShaderNotifier.new,
   name: 'shaderNotifierProvider',
+);
+
+// ═══════════════════════════════════════════════════════════════════════
+// INTERACTION — Pad tattici (BassPad + NavPad)
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Controller interazione BassPad/NavPad con Ticker ease-out.
+final interactionControllerProvider =
+    NotifierProvider<InteractionController, InteractionState>(
+  InteractionController.new,
+  name: 'interactionControllerProvider',
 );

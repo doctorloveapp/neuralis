@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/di/providers.dart';
 import 'core/services/permission_service.dart';
+import 'features/audio_engine/domain/entities/audio_entity.dart';
 import 'features/overlay_ui/presentation/screens/overlay_dashboard.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/theme/lcars_colors.dart';
@@ -157,6 +158,26 @@ class _SplashScreenState extends ConsumerState<_SplashScreen>
     } catch (e) {
       debugPrint('[Splash] audio permission error: $e');
       // Non bloccare su errore mic: mostriamo la dashboard lo stesso
+    }
+
+    // ── Fase 3: Shader warm-up ────────────────────────────────────────────────
+    _setStatus('LOADING NEURAL SHADER...');
+    try {
+      await ref.read(shaderNotifierProvider.notifier)
+          .initialize(ref.read(shaderRepositoryProvider));
+    } catch (e) {
+      debugPrint('[Splash] shader init error: $e');
+      // Non bloccante: la Dashboard mostra il placeholder di errore
+    }
+
+    // ── Fase 4: Avvia cattura audio ───────────────────────────────────────────
+    _setStatus('ACTIVATING AUDIO SENSORS...');
+    try {
+      await ref.read(audioNotifierProvider.notifier)
+          .startCapture(AudioCaptureMode.external);
+    } catch (e) {
+      debugPrint('[Splash] audio start error: $e');
+      // Non bloccante: l'utente può usare INT/EXT dalla Dashboard
     }
 
     // ── Tutte le fasi OK ─────────────────────────────────────────────────────

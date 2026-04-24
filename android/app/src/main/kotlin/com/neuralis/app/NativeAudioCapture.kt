@@ -59,6 +59,10 @@ class NativeAudioCapture : EventChannel.StreamHandler {
     private var peakMagnitude       = 1.0f
     private val PEAK_DECAY          = 0.9995f // decadimento lento per normalizzazione stabile
 
+    // ── Anti-loop failover guard ─────────────────────────────────────────
+    /** True se abbiamo già eseguito un failover DRM in questa sessione. */
+    private var hasDrmFailoverOccurred = false
+
     // ── Pre-computazione bande logaritmiche ───────────────────────────────
     // Calcolate una volta sola in init per evitare allocazioni nel loop audio.
     private val bandBoundaries: Array<IntRange> = computeBandBoundaries()
@@ -93,10 +97,11 @@ class NativeAudioCapture : EventChannel.StreamHandler {
         }
         currentMode = mode
         belowThresholdCount = 0
+        hasDrmFailoverOccurred = false  // reset guard ad ogni nuova sessione
         isCapturing = true
 
+        Log.i(TAG, "▶ start: avvio cattura — mode=$mode")
         captureJob = scope.launch {
-            Log.d(TAG, "start: avvio cattura in modalità $mode")
             runCaptureLoop(mode)
         }
         result.success(null)
@@ -113,7 +118,7 @@ class NativeAudioCapture : EventChannel.StreamHandler {
 
     /** Cambia modalità al volo. */
     fun setMode(mode: String, result: MethodChannel.Result) {
-        Log.d(TAG, "setMode: cambio da $currentMode a $mode")
+        Log.i(TAG, "⇄ setMode: $currentMode → $mode (hasDrmFailover=$hasDrmFailoverOccurred)")
         currentMode = mode
         belowThresholdCount = 0
         if (isCapturing) {
@@ -421,12 +426,15 @@ class NativeAudioCapture : EventChannel.StreamHandler {
      * buffer consecutivi (~3 secondi), emette DRM_BLOCKED e forza modalità EXTERNAL.
      */
     private fun checkDrmRms(buffer: FloatArray) {
+        // Guard: se abbiamo già fatto failover, non monitorare più
+        if (hasDrmFailoverOccurred) return
+
         val rms = computeRms(buffer)
         if (rms < SILENCE_THRESHOLD) {
             belowThresholdCount++
             if (belowThresholdCount >= DRM_THRESHOLD_BUFFERS) {
                 belowThresholdCount = 0
-                Log.w(TAG, "checkDrmRms: DRM rilevato (rms=$rms) — failover a EXTERNAL")
+                Log.w(TAG, "⚠ checkDrmRms: DRM rilevato (rms=$rms, buffers=$DRM_THRESHOLD_BUFFERS) — failover a EXTERNAL")
                 triggerDrmFailover(rms)
             }
         } else {
@@ -443,12 +451,27 @@ class NativeAudioCapture : EventChannel.StreamHandler {
 
     /** Emette DRM_BLOCKED e forza la modalità EXTERNAL. */
     private fun triggerDrmFailover(rms: Float) {
+        if (hasDrmFailoverOccurred) {
+            Log.w(TAG, "⛔ triggerDrmFailover: BLOCKED — failover già eseguito in questa sessione")
+            return
+        }
+        hasDrmFailoverOccurred = true
+        Log.w(TAG, "🔄 triggerDrmFailover: DRM_BLOCKED (rms=$rms) — switching to EXTERNAL")
+
         // Emetti evento DRM
         emitEvent(mapOf("event" to "DRM_BLOCKED", "rms" to rms))
+
         // Forza modalità EXTERNAL sul prossimo ciclo
         currentMode = "external"
         captureJob?.cancel()
-        captureJob = scope.launch { runCaptureLoop("external") }
+        captureJob = scope.launch {
+            try {
+                runCaptureLoop("external")
+            } catch (e: Exception) {
+                Log.e(TAG, "⛔ triggerDrmFailover: mic fallback FAILED — ${e.message}", e)
+                // Non ritentare: l'utente può riavviare manualmente dalla Dashboard
+            }
+        }
     }
 
     // ═════════════════════════════════════════════════════════════════════

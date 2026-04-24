@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/providers.dart';
 import '../domain/entities/audio_entity.dart';
+import '../domain/entities/fft_data.dart';
 import '../domain/repositories/audio_capture_repository.dart';
 import 'audio_state.dart';
 
@@ -43,6 +44,9 @@ class AudioNotifier extends AsyncNotifier<AudioState> {
         final current = state.asData?.value;
         if (current != null) {
           state = AsyncData(current.copyWith(currentFFT: fftData));
+
+          // 🔗 Routing FFT → ShaderNotifier (applica bassGain alle bande 0–7)
+          _routeToShader(fftData);
         }
       },
       onError: (Object err) => state = AsyncError(err, StackTrace.current),
@@ -70,6 +74,30 @@ class AudioNotifier extends AsyncNotifier<AudioState> {
     _drmSub?.cancel();
     _fftSub = null;
     _drmSub = null;
+  }
+
+  /// Instrada i dati FFT allo [ShaderNotifier] applicando il bassGain
+  /// dall'[InteractionController] (bands 0–7 × gain, clampa in [0.0, 1.0]).
+  void _routeToShader(FFTData fftData) {
+    try {
+      // Legge il bassGain corrente dall'InteractionController (Notifier sync)
+      final bassGain = ref.read(interactionControllerProvider).bassGain;
+
+      // Applica gain alle bande basse senza allocare nuova lista se gain == 1.0
+      final List<double> bands;
+      if ((bassGain - 1.0).abs() < 0.01) {
+        bands = fftData.bands; // gain neutro: nessuna allocazione
+      } else {
+        bands = List<double>.from(fftData.bands);
+        for (int i = 0; i < 8 && i < bands.length; i++) {
+          bands[i] = (bands[i] * bassGain).clamp(0.0, 1.0);
+        }
+      }
+
+      ref.read(shaderNotifierProvider.notifier).updateAudio(bands);
+    } catch (_) {
+      // Shader o InteractionController non ancora pronti — ignorare
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────

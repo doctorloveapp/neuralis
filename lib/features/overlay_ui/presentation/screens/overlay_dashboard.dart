@@ -185,7 +185,7 @@ class _BottomPadRow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _BassPad — pulsante pressione continua bass
+// _BassPad — pulsante pressione continua bass con feedback visivo
 // ---------------------------------------------------------------------------
 
 class _BassPad extends StatelessWidget {
@@ -195,26 +195,63 @@ class _BassPad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) {
-        // TODO(section5): ref.read(interactionControllerProvider).onBassPadPressed()
+    return Consumer(
+      builder: (context, watchRef, _) {
+        // ref.select → rebuild SOLO quando bassGain cambia
+        final bassGain = watchRef.watch(
+          interactionControllerProvider.select((s) => s.bassGain),
+        );
+
+        // Interpolazione colore blueGray → atomic proporzionale al gain [1.0, 3.0]
+        final t     = ((bassGain - 1.0) / 2.0).clamp(0.0, 1.0);
+        final color = Color.lerp(LcarsColors.blueGray, LcarsColors.atomic, t)!;
+
+        return GestureDetector(
+          // Long press: pressione continua → boost sostenuto
+          onLongPressStart: (_) => ref
+              .read(interactionControllerProvider.notifier)
+              .onBassPadPressed(),
+          onLongPressEnd: (_) => ref
+              .read(interactionControllerProvider.notifier)
+              .onBassPadReleased(),
+          // Tap breve: burst rapido
+          onTapDown: (_) => ref
+              .read(interactionControllerProvider.notifier)
+              .onBassPadPressed(),
+          onTapUp: (_) => ref
+              .read(interactionControllerProvider.notifier)
+              .onBassPadReleased(),
+          onTapCancel: () => ref
+              .read(interactionControllerProvider.notifier)
+              .onBassPadReleased(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 80),
+            width:  80,
+            height: 48,
+            decoration: BoxDecoration(
+              color:        LcarsColors.withAlpha(color, 0.15 + t * 0.25),
+              border:       Border.all(color: color, width: 1.5 + t),
+              borderRadius: const BorderRadius.only(
+                topLeft:     Radius.circular(22),
+                bottomLeft:  Radius.circular(22),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              l10n.padBass.toUpperCase(),
+              style: LcarsTypography.label.copyWith(color: color),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
       },
-      onTapUp: (_) {
-        // TODO(section5): ref.read(interactionControllerProvider).onBassPadReleased()
-      },
-      child: LcarsButton(
-        label:  l10n.padBass,
-        onTap:  () {},
-        color:  LcarsColors.atomic,
-        width:  80,
-        height: 48,
-      ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// _NavPad — area swipe direzionale
+// _NavPad — area swipe direzionale con feedback visivo bending
 // ---------------------------------------------------------------------------
 
 class _NavPad extends StatelessWidget {
@@ -224,28 +261,60 @@ class _NavPad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanUpdate: (details) {
-        // TODO(section5): ref.read(interactionControllerProvider)
-        //   .onNavPadPanUpdate(details.delta, padSize)
+    return Consumer(
+      builder: (context, watchRef, _) {
+        // ref.select → rebuild SOLO quando isBending cambia (bool)
+        final isBending = watchRef.watch(
+          interactionControllerProvider.select((s) => s.isBending),
+        );
+
+        final borderColor = LcarsColors.withAlpha(
+          isBending ? LcarsColors.purple : LcarsColors.blueGray,
+          isBending ? 0.75 : 0.40,
+        );
+        final bgColor = LcarsColors.withAlpha(
+          isBending ? LcarsColors.purple : LcarsColors.blueGray,
+          isBending ? 0.18 : 0.10,
+        );
+        final labelColor =
+            isBending ? LcarsColors.purple : LcarsColors.blueGray;
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return GestureDetector(
+              onPanUpdate: (details) {
+                final w = constraints.maxWidth.clamp(1.0, double.infinity);
+                final h = constraints.maxHeight.clamp(1.0, double.infinity);
+                ref
+                    .read(interactionControllerProvider.notifier)
+                    .onNavPadUpdate(
+                      details.delta.dx / w,
+                      details.delta.dy / h,
+                    );
+              },
+              onPanEnd: (_) => ref
+                  .read(interactionControllerProvider.notifier)
+                  .onNavPadEnd(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                height: 48,
+                decoration: BoxDecoration(
+                  color:  bgColor,
+                  border: Border.all(
+                    color: borderColor,
+                    width: isBending ? 1.5 : 1.0,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  l10n.padNav.toUpperCase(),
+                  style: LcarsTypography.label.copyWith(color: labelColor),
+                ),
+              ),
+            );
+          },
+        );
       },
-      onPanEnd: (_) {
-        // TODO(section5): ref.read(interactionControllerProvider).onNavPadPanEnd()
-      },
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: LcarsColors.withAlpha(LcarsColors.blueGray, 0.15),
-          border: Border.all(
-            color: LcarsColors.withAlpha(LcarsColors.blueGray, 0.4),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          l10n.padNav.toUpperCase(),
-          style: LcarsTypography.label.copyWith(color: LcarsColors.blueGray),
-        ),
-      ),
     );
   }
 }
