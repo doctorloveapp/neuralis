@@ -87,15 +87,21 @@ class ShaderNotifier extends AsyncNotifier<ShaderState> {
   /// Avvia il warm-up dello shader e il Ticker.
   /// Da chiamare durante la fase di Init/Splash dell'app.
   Future<void> initialize(dynamic shaderRepository) async {
+    debugPrint('[ShaderNotifier] initialize() called');
     state = const AsyncLoading();
     try {
+      debugPrint('[ShaderNotifier] calling loadShader()...');
       await shaderRepository.loadShader();
+      debugPrint('[ShaderNotifier] loadShader() completed ✓');
       _startTicker();
       state = AsyncData(ShaderState.initial().copyWith(
         isLoaded:  true,
         isRunning: true,
       ));
-    } catch (e, _) {
+      debugPrint('[ShaderNotifier] state → isLoaded=true, isRunning=true');
+    } catch (e, st) {
+      debugPrint('[ShaderNotifier] initialize() FAILED: $e');
+      debugPrint('[ShaderNotifier] stacktrace: $st');
       state = AsyncData(ShaderState.initial().copyWith(
         errorKey: 'shaderLoadFailed',
       ));

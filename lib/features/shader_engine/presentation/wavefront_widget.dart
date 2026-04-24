@@ -33,14 +33,16 @@ class WavefrontWidget extends ConsumerWidget {
         isError: true,
       ),
       data: (shaderState) {
-        if (!shaderState.isLoaded) {
-          return _LcarsPlaceholder(label: 'INITIALIZING SENSORS...');
-        }
+        // ⚠️ Controllare errorKey PRIMA di isLoaded!
+        // Se lo shader fallisce, errorKey è set ma isLoaded resta false.
         if (shaderState.errorKey != null) {
           return _LcarsPlaceholder(
             label: context.l10n.shaderLoadFailed.toUpperCase(),
             isError: true,
           );
+        }
+        if (!shaderState.isLoaded) {
+          return _LcarsPlaceholder(label: 'INITIALIZING SENSORS...');
         }
 
         final repo   = ref.watch(shaderRepositoryProvider);

@@ -190,11 +190,11 @@ void main() {
             float zFade = 1.0 - smoothstep(MESH_DEPTH * 0.5, MESH_DEPTH, z0);
 
             // Colore della linea (interpolato energia audio)
-            vec3 col = wireColor(energy);
+            vec3 lineCol = wireColor(energy);
 
-            accumR += col.r * lineR * zFade;
-            accumG += col.g * lineG * zFade;
-            accumB += col.b * lineB * zFade;
+            accumR += lineCol.r * lineR * zFade;
+            accumG += lineCol.g * lineG * zFade;
+            accumB += lineCol.b * lineB * zFade;
             accumW += max(max(lineR, lineG), lineB) * zFade;
         }
     }
