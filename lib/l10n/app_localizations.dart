@@ -109,6 +109,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Neuralis — System Active'**
   String get systemActive;
+
+  /// Placeholder screen status label
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM INITIALIZED'**
+  String get systemInitialized;
+
+  /// System status indicator — active
+  ///
+  /// In en, this message translates to:
+  /// **'ONLINE'**
+  String get statusOnline;
+
+  /// System status indicator — DRM warning
+  ///
+  /// In en, this message translates to:
+  /// **'WARNING'**
+  String get statusWarning;
+
+  /// Label for the bass interaction pad
+  ///
+  /// In en, this message translates to:
+  /// **'BASS'**
+  String get padBass;
+
+  /// Label for the navigation interaction pad
+  ///
+  /// In en, this message translates to:
+  /// **'NAV'**
+  String get padNav;
+
+  /// Error shown when the GLSL shader fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'SENSOR CALIBRATION FAILED'**
+  String get shaderLoadFailed;
+
+  /// Title for the overlay permission request section
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM ALERT WINDOW'**
+  String get permissionOverlayTitle;
+
+  /// Body text explaining why overlay permission is needed
+  ///
+  /// In en, this message translates to:
+  /// **'Required to display the Neural Wavefront overlay on top of other applications.'**
+  String get permissionOverlayDescription;
+
+  /// Button label to open overlay permission settings
+  ///
+  /// In en, this message translates to:
+  /// **'GRANT OVERLAY ACCESS'**
+  String get permissionOverlayButton;
+
+  /// Title for the microphone permission request section
+  ///
+  /// In en, this message translates to:
+  /// **'AUDIO CAPTURE'**
+  String get permissionAudioTitle;
+
+  /// Body text explaining why microphone permission is needed
+  ///
+  /// In en, this message translates to:
+  /// **'Required to capture ambient sound via microphone (External and Hybrid modes).'**
+  String get permissionAudioDescription;
+
+  /// Button label to request microphone permission
+  ///
+  /// In en, this message translates to:
+  /// **'GRANT AUDIO ACCESS'**
+  String get permissionAudioButton;
+
+  /// Title for the MediaProjection permission request section
+  ///
+  /// In en, this message translates to:
+  /// **'INTERNAL AUDIO CAPTURE'**
+  String get permissionMediaProjectionTitle;
+
+  /// Body text explaining why MediaProjection permission is needed
+  ///
+  /// In en, this message translates to:
+  /// **'Required to capture system audio from streaming apps (Internal and Hybrid modes).'**
+  String get permissionMediaProjectionDescription;
+
+  /// Button label to start MediaProjection flow
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVATE INTERNAL CAPTURE'**
+  String get permissionMediaProjectionButton;
+
+  /// Label when a permission is granted
+  ///
+  /// In en, this message translates to:
+  /// **'GRANTED'**
+  String get permissionStatusGranted;
+
+  /// Label when a permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'DENIED'**
+  String get permissionStatusDenied;
+
+  /// Label when a permission status is unknown
+  ///
+  /// In en, this message translates to:
+  /// **'PENDING'**
+  String get permissionStatusUnknown;
+
+  /// Label when a permission is permanently denied
+  ///
+  /// In en, this message translates to:
+  /// **'BLOCKED'**
+  String get permissionStatusPermanentlyDenied;
+
+  /// Title of the LCARS critical banner for permanently denied permissions
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM CRITICAL'**
+  String get permissionCriticalTitle;
+
+  /// Body of the LCARS critical banner for permanently denied permissions
+  ///
+  /// In en, this message translates to:
+  /// **'MANUAL INTERVENTION REQUIRED'**
+  String get permissionCriticalBody;
+
+  /// Button label to open app settings when permission is permanently denied
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN SYSTEM SETTINGS'**
+  String get permissionCriticalAction;
+
+  /// LCARS warning banner shown when DRM failover is triggered
+  ///
+  /// In en, this message translates to:
+  /// **'⚠ INTERNAL AUDIO BLOCKED — ACTIVATING AMBIENT MIC SENSOR'**
+  String get drmWarningBanner;
+
+  /// Label for internal audio capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'INTERNAL'**
+  String get audioModeInternal;
+
+  /// Label for external (microphone) audio capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'EXTERNAL'**
+  String get audioModeExternal;
+
+  /// Label for hybrid audio capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'HYBRID'**
+  String get audioModeHybrid;
 }
 
 class _AppLocalizationsDelegate

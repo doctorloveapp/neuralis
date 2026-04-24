@@ -1,5 +1,42 @@
 {
   "@@locale": "it",
+
   "appTitle": "Neuralis",
-  "systemActive": "Neuralis — Sistema Attivo"
+  "systemActive": "Neuralis — Sistema Attivo",
+  "systemInitialized": "SISTEMA INIZIALIZZATO",
+
+  "statusOnline": "ONLINE",
+  "statusWarning": "ATTENZIONE",
+
+  "padBass": "BASS",
+  "padNav": "NAV",
+
+  "shaderLoadFailed": "CALIBRAZIONE SENSORI FALLITA",
+
+  "permissionOverlayTitle": "OVERLAY DI SISTEMA",
+  "permissionOverlayDescription": "Necessario per visualizzare il Neural Wavefront sopra le altre applicazioni.",
+  "permissionOverlayButton": "CONCEDI ACCESSO OVERLAY",
+
+  "permissionAudioTitle": "CATTURA AUDIO",
+  "permissionAudioDescription": "Necessario per catturare il suono ambientale tramite microfono (modalità Esterna e Ibrida).",
+  "permissionAudioButton": "CONCEDI ACCESSO AUDIO",
+
+  "permissionMediaProjectionTitle": "CATTURA AUDIO INTERNO",
+  "permissionMediaProjectionDescription": "Necessario per catturare l'audio di sistema dalle app di streaming (modalità Interna e Ibrida).",
+  "permissionMediaProjectionButton": "ATTIVA CATTURA INTERNA",
+
+  "permissionStatusGranted": "CONCESSO",
+  "permissionStatusDenied": "NEGATO",
+  "permissionStatusUnknown": "IN ATTESA",
+  "permissionStatusPermanentlyDenied": "BLOCCATO",
+
+  "permissionCriticalTitle": "SISTEMA CRITICO",
+  "permissionCriticalBody": "INTERVENTO MANUALE RICHIESTO",
+  "permissionCriticalAction": "APRI IMPOSTAZIONI SISTEMA",
+
+  "drmWarningBanner": "⚠ AUDIO INTERNO BLOCCATO — ATTIVAZIONE SENSORE MIC AMBIENTALE",
+
+  "audioModeInternal": "INTERNO",
+  "audioModeExternal": "ESTERNO",
+  "audioModeHybrid": "IBRIDO"
 }

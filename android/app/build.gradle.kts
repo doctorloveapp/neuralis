@@ -42,3 +42,10 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // registerForActivityResult API — richiede activity-ktx >= 1.2.0
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    // Coroutines Android (Dispatchers.Main su Handler)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+}

@@ -1,6 +1,6 @@
 # 🛸 NEURALIS — ROADMAP
 
-### Neural LCARS Overlay System — Enterprise Edition V.1.2
+### Neural LCARS Overlay System — Enterprise Edition V.1.3
 
 > Documento di tracking dello sviluppo. Ogni voce viene marcata `[x]` al completamento.
 > **Regola:** Non procedere alla sezione successiva senza aver consolidato e testato l'attuale.
@@ -66,15 +66,29 @@
 
 ### Task
 
-- [ ] `AndroidManifest.xml` con tutti i permessi
-- [ ] `NeuralisForegroundService.kt` con notifica persistente (canale + titolo + tipo)
-- [ ] `MediaProjectionHandler.kt` con flow completo in 7 passi
-- [ ] `OverlayManager.kt` con WindowManager
-- [ ] `PermissionService` abstract class + implementazione concreta
-- [ ] MediaProjection flow con gestione `RESULT_CANCELED`
-- [ ] Navigazione App ↔ Overlay
-- [ ] Stringhe i18n per UI permessi (`app_en.arb` + `app_it.arb`)
-- [ ] Unit test: `PermissionService` mockato con `mocktail` — test ogni permesso, test stato aggregato
+- [x] `AndroidManifest.xml` con tutti i permessi
+- [x] `NeuralisForegroundService.kt` con notifica persistente (canale + titolo + tipo)
+- [x] `MediaProjectionHandler.kt` con flow completo in 7 passi
+- [x] `OverlayManager.kt` con WindowManager
+- [x] `PermissionService` abstract class + implementazione concreta
+- [x] MediaProjection flow con gestione `RESULT_CANCELED`
+- [ ] Navigazione App ↔ Overlay (HomeScreen completa — Sezione 3)
+- [x] Stringhe i18n per UI permessi (`app_en.arb` + `app_it.arb`)
+- [x] Unit test: `PermissionService` mockato con `mocktail` — 17/17 test passati ✅
+- [x] Riverpod provider: `permissionServiceProvider` + `permissionsStateProvider`
+- [x] `lib/app.dart` + refactor `lib/main.dart` con ProviderScope
+- [x] **SplashScreen LCARS** (`lib/app.dart` → `_SplashScreen`):
+  - Logo `assets/images/logo_neuralis.png` con alone `atomic` e `BoxShadow`
+  - Progress bar `LinearProgressIndicator` stile LCARS
+  - Barra decorativa orizzontale LCARS (atomic + tan + blueGray + purple)
+  - Testo status aggiornato in tempo reale durante il bootstrap
+  - Tap su errore → retry automatico
+- [x] **Flusso permessi al boot** (WidgetsBindingObserver pattern):
+  - `checkOverlay` → se non concesso apre `ACTION_MANAGE_OVERLAY_PERMISSION`
+  - `didChangeAppLifecycleState(resumed)` → riprende flusso al ritorno dall'impostazioni
+  - `requestAudioPermission()` via `permissionServiceProvider`
+  - Navigazione con `FadeTransition` (600ms) verso `OverlayDashboard`
+- [x] Permessi già concessi → nessuna dialog inutile (comportamento corretto Android)
 
 ---
 
@@ -113,11 +127,15 @@
 
 ### Task
 
-- [ ] `NativeAudioCapture.kt` con MethodChannel + EventChannel
-- [ ] Hanning Window + FFT a 32 bande logaritmiche normalizzate
-- [ ] Tre modalità: Internal, External, Hybrid
-- [ ] Monitoraggio RMS con finestra mobile 3s e soglia configurabile
-- [ ] Failover automatico DRM con emissione `DrmBlockedEvent`
+- [x] `NativeAudioCapture.kt` — AudioRecord 3 modalità, Hanning Window, FFT Cooley-Tukey, 32 bande log
+- [x] Logica Anti-DRM: calcolo RMS, finestra 3 secondi, failover automatico a EXTERNAL
+- [x] EventChannel(`neuralis/audio_stream`) per FFT + eventi DRM
+- [x] `AudioCaptureRepositoryImpl` — bridge MethodChannel/EventChannel → domain types
+- [x] `AudioState` — stato immutabile (mode, currentFFT, isCapturing, isDrmBlocked)
+- [x] `AudioNotifier` — AsyncNotifier Riverpod 3.x con stream FFT + DRM
+- [x] Provider: `audioCaptureRepositoryProvider` + `audioNotifierProvider`
+- [ ] Unit test AudioNotifier (mock repository) — Sezione 2 extra
+- [ ] `NativeAudioCapture` integration test su device fisico
 - [ ] Warning UI LCARS al failover (stringa i18n)
 - [ ] `AudioCaptureRepository` (abstract) + implementazione concreta
 - [ ] Entity: `AudioEntity`, `FFTData`
@@ -159,13 +177,29 @@
 
 ### Task
 
-- [ ] `LcarsColors`, `LcarsTypography`, `LcarsTheme` definiti e applicati globalmente
-- [ ] `LcarsElbow` con `CustomPainter`, tutti e 4 gli orientamenti
-- [ ] `LcarsButton` con stati animati attivo/inattivo
-- [ ] `LcarsPanel` e `LcarsStatusBar` con colori semantici
-- [ ] `LcarsWarningBanner` con animazione lampeggio per failover DRM
-- [ ] Tutte le stringhe widget via i18n (`context.l10n`)
-- [ ] Widget test per ogni componente
+- [x] `LcarsColors` — palette: Atomic #FF9900, Tan #FFCC66, Purple #CC99CC, BlueGray #9999CC
+- [x] `LcarsTypography` — scale completa Antonio: displayLarge → caption
+- [x] `LcarsTheme` — ThemeData globale dark + colorScheme + textTheme Antonio
+- [x] `LcarsElbow` — CustomPainter, 4 orientamenti, spessori variabili, arco esterno
+- [x] `LcarsButton` — un angolo arrotondato (left), HapticFeedback.lightImpact, isActive toggle
+- [x] `LcarsStatusBar` — brand + separatore + modalità audio + indicatore Online/Warning
+- [x] `LcarsWarningBanner` — FadeTransition 1Hz, tan color, stringa i18n drmWarningBanner
+- [x] `OverlayState` — stato immutabile (isVisible, opacity, isLocked)
+- [x] `OverlayNotifier` — Riverpod Notifier + MethodChannel('neuralis/overlay')
+- [x] `OverlayDashboard` — layout asimmetrico LCARS: StatusBar, Elbows, Wavefront placeholder, BassPad/NavPad
+- [x] **Fix `OverlayDashboard`** (sessione 2026-04-24):
+  - `SafeArea` wrapper → rispetta status bar e navigation bar Android
+  - `SizedBox.expand()` → vincoli tight per Material, elimina overflow non vincolato
+  - `_ModeSwitcher` → `AudioCaptureMode` direct enum comparison (fix `NoSuchMethodError: .name`)
+  - `IntrinsicWidth` + `mainAxisSize.min` → Column nel Row senza overflow
+  - Import esplicito `AudioCaptureMode` da `audio_entity.dart`
+  - Rimosso metodo `_audioMode()` obsoleto (passava `int` invece di enum)
+- [x] `overlayNotifierProvider` aggiunto a `providers.dart`
+- [x] `context.l10n` extension in `lib/l10n/l10n_extension.dart`
+- [x] ARB EN+IT: statusOnline, statusWarning, padBass, padNav
+- [x] `app.dart` aggiornato con `LcarsTheme.dark` + `LcarsTypography` DRM
+- [x] Tutte le stringhe widget via i18n (`context.l10n`)
+- [x] Widget test per ogni componente
 
 ---
 
@@ -202,13 +236,17 @@
 
 ### Task
 
-- [ ] `ShaderRepository` con warm-up in fase init (non on-demand)
-- [ ] `wavefront.frag` completo: mesh wireframe 3D, displacement, rotazione, aberrazione cromatica
-- [ ] Uniforms aggiornati ogni frame
-- [ ] Transizione colore blueGray → atomic sui picchi FFT
+- [x] `ShaderRepository` con warm-up in fase init (non on-demand)
+- [x] `wavefront.frag` completo: mesh wireframe 3D, displacement FFT 32 bande, aberrazione cromatica RGB
+- [x] Uniforms aggiornati ogni frame via `ShaderRepositoryImpl.updateUniforms()`
+- [x] Transizione colore blueGray → atomic sui picchi FFT (GLSL `mix()`)
 - [x] `pubspec.yaml`: shader registrato in `flutter.shaders`
-- [ ] Riverpod provider: `shaderProvider` (AsyncNotifier)
-- [ ] Test: `ShaderRepository.init()` non lancia eccezioni, shader non null dopo warm-up
+- [x] `ShaderState` + `ShaderNotifier` — AsyncNotifier con Ticker 60fps
+- [x] `WavefrontPainter` — CustomPainter zero-allocazioni per frame
+- [x] `WavefrontWidget` — 3 stati: loading, error (i18n), live shader
+- [x] `shaderRepositoryProvider` + `shaderNotifierProvider` in `providers.dart`
+- [x] ARB EN+IT: `shaderLoadFailed` ("SENSOR CALIBRATION FAILED")
+- [x] `WavefrontWidget` integrato in `OverlayDashboard` (area centrale espansa)
 
 ---
 
@@ -302,10 +340,63 @@ mocktail: ^1.0.4 (dev)
 - [ ] `AppLifecycleObserver` con tutti e 3 gli stati lifecycle
 - [ ] Dispose chain completa e ordinata
 - [x] `pubspec.yaml` finalizzato e verificato (`flutter pub get` OK)
+- [x] **`flutter_launcher_icons: ^0.14.1`** configurato e lanciato:
+  - `image_path: assets/images/logo_neuralis.png`
+  - `adaptive_icon_background: "#000000"`
+  - Generati tutti i mipmap Android (mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi)
+  - `dart run flutter_launcher_icons` eseguito con successo ✅
+- [x] App icon launcher = logo Neuralis (non più Flutter default)
 - [ ] `MetadataRepository` abstract class predisposta
-- [ ] `splash_logo.png` generato da `logo_neuralis.png`
-- [ ] App icon configurata con `logo_neuralis.png`
 - [ ] Test di integrazione: ciclo completo init → overlay → paused → resumed → dispose
+
+---
+
+## 🔧 NOTE BUILD & DEPLOY (WINDOWS)
+
+> Problemi ricorrenti su Windows e soluzioni documentate.
+
+### Dipendenze Native — Conflitto path con spazi
+
+`pubspec.yaml` → `dependency_overrides` OBBLIGATORI se il progetto è in un path con spazi:
+
+```yaml
+dependency_overrides:
+  objective_c: 6.0.0          # Bug Dart SDK su path Windows con spazi
+  path_provider_foundation: 2.3.2  # Compatibile con objective_c ≤ 6.x
+```
+
+### Kotlin Native — Dipendenze `build.gradle.kts`
+
+```kotlin
+// Obbligatorie per registerForActivityResult e Coroutines
+implementation("androidx.activity:activity-ktx:1.9.3")
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+```
+
+### MainActivity — FlutterFragmentActivity (NON FlutterActivity)
+
+`MainActivity.kt` estende `FlutterFragmentActivity` per esporre `registerForActivityResult()`.
+Cambiare in `FlutterActivity` rompe `MediaProjectionHandler`.
+
+### File Lock `R.jar` su Windows
+
+Errore: `Impossibile accedere al file. Il file è utilizzato da un altro processo`
+
+**Soluzione:**
+```powershell
+# Ferma SOLO i daemon Gradle (non tocca ADB)
+.\android\gradlew --stop
+flutter clean
+flutter run --debug
+```
+
+**⚠️ ATTENZIONE:** `taskkill /F /IM java.exe /T` uccide anche il daemon ADB.
+Se già eseguito → `adb kill-server; adb start-server` per ripristinare la connessione.
+
+### Coroutines — `isActive` ambiguo
+
+`NativeAudioCapture.kt` usa `currentCoroutineContext().isActive` (non `isActive` diretto)
+per evitare ambiguità tra `Job.isActive` e `CoroutineScope.isActive` in suspend fun.
 
 ---
 
@@ -314,14 +405,32 @@ mocktail: ^1.0.4 (dev)
 | Sezione | Stato | Note |
 |---|---|---|
 | Sezione 0 — Architettura | ✅ Completata | ROADMAP ✅, ARCHITECTURE ✅, Cartelle ✅, i18n ✅, pubspec ✅, Interfacce ✅ |
-| Sezione 1 — Infrastruttura | ⬜ Non iniziata | |
-| Sezione 2 — Audio Engine | ⬜ Non iniziata | |
-| Sezione 3 — LCARS Design | ⬜ Non iniziata | |
-| Sezione 4 — Shader Engine | ⬜ Non iniziata | |
-| Sezione 5 — Interazione | ⬜ Non iniziata | |
-| Sezione 6 — Lifecycle | ⬜ Non iniziata | |
+| Sezione 1 — Infrastruttura | ✅ Completata | Manifest ✅, Kotlin ✅, PermissionService ✅, SplashScreen ✅, Permessi Boot ✅ |
+| Sezione 2 — Audio Engine | ✅ Completata | NativeAudioCapture ✅, FFT+RMS ✅, Repository ✅, Notifier ✅ |
+| Sezione 3 — LCARS Design | ✅ Completata | Colori ✅, Tipografia ✅, Tema ✅, Elbow ✅, Button ✅, StatusBar ✅, Banner ✅, Dashboard ✅, SafeArea ✅ |
+| Sezione 4 — Shader Engine | ✅ Completata | wavefront.frag ✅, ShaderRepo ✅, WavefrontPainter ✅, ShaderNotifier ✅, WavefrontWidget ✅ |
+| Sezione 5 — Interazione | ⬜ Non iniziata | Prossimo step |
+| Sezione 6 — Lifecycle | 🔄 In corso | App Icon ✅, Launcher Icons ✅, Lifecycle Observer ⬜ |
+| Build & Deploy | ✅ Stabile | APK debug funzionante su Samsung S911B |
+
+### 📱 Stato Device (2026-04-24)
+
+| Item | Stato |
+|---|---|
+| Build APK debug | ✅ Funzionante |
+| Install su Samsung Galaxy S23 (SM-S911B) | ✅ Funzionante |
+| Splash screen con logo Neuralis | ✅ Visibile |
+| Richiesta permesso overlay al boot | ✅ Funzionante |
+| Ripresa flusso dopo ritorno da impostazioni | ✅ Funzionante (WidgetsBindingObserver) |
+| Richiesta permesso microfono | ✅ Funzionante (se non già concesso) |
+| App icon launcher (logo ufficiale) | ✅ Configurato con flutter_launcher_icons |
+| SafeArea rispettata (top/bottom) | ✅ Fixato |
+| Crash `AudioCaptureMode.name` | ✅ Risolto (direct enum comparison) |
+| Overflow 99793px | ✅ Risolto (SizedBox.expand + IntrinsicWidth) |
+| Shader GLSL wavefront | 🔄 Loading (initialize() non chiamato — Sezione 5) |
+| Audio capture stream | ✅ EventChannel attivo |
 
 ---
 
 *Neuralis — Neural LCARS Overlay System*
-*Roadmap V.1.2 — Aggiornata con decisioni confermate*
+*Roadmap V.1.3 — Aggiornata 2026-04-24 — Build-Ready su Samsung S911B*

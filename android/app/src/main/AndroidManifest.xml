@@ -1,8 +1,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         NEURALIS — PERMESSI DI SISTEMA
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- Overlay di sistema: permette di disegnare sopra tutte le altre app.
+         Richiede ACTION_MANAGE_OVERLAY_PERMISSION (non un runtime permission
+         standard — deve essere concesso dall'utente nelle impostazioni). -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Cattura microfono (modalità External e Hybrid). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Foreground Service — obbligatorio per Android 9+. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Foreground Service di tipo mediaProjection — obbligatorio per Android 14+
+         per qualsiasi ForegroundService che usa MediaProjection. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         APPLICAZIONE
+         ═══════════════════════════════════════════════════════════════ -->
     <application
-        android:label="neuralis"
+        android:label="Neuralis"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- ─── MainActivity ─────────────────────────────────────────── -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -12,34 +37,48 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
+
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <!-- Launcher intent -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+
+        <!-- ─── NeuralisForegroundService ────────────────────────────── -->
+        <!--
+            CRITICO per Android 13+: il ForegroundService deve essere dichiarato
+            con foregroundServiceType="mediaProjection" per poter utilizzare
+            MediaProjection API per la cattura audio interna.
+
+            Il service NON è exported (nessuna app esterna può avviarlo).
+            Avviato solo da MainActivity tramite MethodChannel.
+        -->
+        <service
+            android:name=".NeuralisForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <!-- Meta-data Flutter embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <!-- Necessario per Flutter ProcessTextPlugin -->
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <!-- Necessario per aprire le impostazioni dell'app (permessi permanentemente negati) -->
+        <intent>
+            <action android:name="android.settings.ACTION_MANAGE_OVERLAY_PERMISSION" />
         </intent>
     </queries>
+
 </manifest>

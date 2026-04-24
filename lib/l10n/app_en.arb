@@ -1,11 +1,127 @@
 {
   "@@locale": "en",
+
   "appTitle": "Neuralis",
-  "@appTitle": {
-    "description": "Application title"
-  },
+  "@appTitle": { "description": "Application title" },
+
   "systemActive": "Neuralis — System Active",
-  "@systemActive": {
-    "description": "Foreground service notification title"
+  "@systemActive": { "description": "Foreground service notification title" },
+
+  "systemInitialized": "SYSTEM INITIALIZED",
+  "@systemInitialized": { "description": "Placeholder screen status label" },
+
+  "statusOnline": "ONLINE",
+  "@statusOnline": { "description": "System status indicator — active" },
+
+  "statusWarning": "WARNING",
+  "@statusWarning": { "description": "System status indicator — DRM warning" },
+
+  "padBass": "BASS",
+  "@padBass": { "description": "Label for the bass interaction pad" },
+
+  "padNav": "NAV",
+  "@padNav": { "description": "Label for the navigation interaction pad" },
+
+  "shaderLoadFailed": "SENSOR CALIBRATION FAILED",
+  "@shaderLoadFailed": { "description": "Error shown when the GLSL shader fails to load" },
+
+  "permissionOverlayTitle": "SYSTEM ALERT WINDOW",
+  "@permissionOverlayTitle": {
+    "description": "Title for the overlay permission request section"
+  },
+
+  "permissionOverlayDescription": "Required to display the Neural Wavefront overlay on top of other applications.",
+  "@permissionOverlayDescription": {
+    "description": "Body text explaining why overlay permission is needed"
+  },
+
+  "permissionOverlayButton": "GRANT OVERLAY ACCESS",
+  "@permissionOverlayButton": {
+    "description": "Button label to open overlay permission settings"
+  },
+
+  "permissionAudioTitle": "AUDIO CAPTURE",
+  "@permissionAudioTitle": {
+    "description": "Title for the microphone permission request section"
+  },
+
+  "permissionAudioDescription": "Required to capture ambient sound via microphone (External and Hybrid modes).",
+  "@permissionAudioDescription": {
+    "description": "Body text explaining why microphone permission is needed"
+  },
+
+  "permissionAudioButton": "GRANT AUDIO ACCESS",
+  "@permissionAudioButton": {
+    "description": "Button label to request microphone permission"
+  },
+
+  "permissionMediaProjectionTitle": "INTERNAL AUDIO CAPTURE",
+  "@permissionMediaProjectionTitle": {
+    "description": "Title for the MediaProjection permission request section"
+  },
+
+  "permissionMediaProjectionDescription": "Required to capture system audio from streaming apps (Internal and Hybrid modes).",
+  "@permissionMediaProjectionDescription": {
+    "description": "Body text explaining why MediaProjection permission is needed"
+  },
+
+  "permissionMediaProjectionButton": "ACTIVATE INTERNAL CAPTURE",
+  "@permissionMediaProjectionButton": {
+    "description": "Button label to start MediaProjection flow"
+  },
+
+  "permissionStatusGranted": "GRANTED",
+  "@permissionStatusGranted": {
+    "description": "Label when a permission is granted"
+  },
+
+  "permissionStatusDenied": "DENIED",
+  "@permissionStatusDenied": {
+    "description": "Label when a permission is denied"
+  },
+
+  "permissionStatusUnknown": "PENDING",
+  "@permissionStatusUnknown": {
+    "description": "Label when a permission status is unknown"
+  },
+
+  "permissionStatusPermanentlyDenied": "BLOCKED",
+  "@permissionStatusPermanentlyDenied": {
+    "description": "Label when a permission is permanently denied"
+  },
+
+  "permissionCriticalTitle": "SYSTEM CRITICAL",
+  "@permissionCriticalTitle": {
+    "description": "Title of the LCARS critical banner for permanently denied permissions"
+  },
+
+  "permissionCriticalBody": "MANUAL INTERVENTION REQUIRED",
+  "@permissionCriticalBody": {
+    "description": "Body of the LCARS critical banner for permanently denied permissions"
+  },
+
+  "permissionCriticalAction": "OPEN SYSTEM SETTINGS",
+  "@permissionCriticalAction": {
+    "description": "Button label to open app settings when permission is permanently denied"
+  },
+
+  "drmWarningBanner": "⚠ INTERNAL AUDIO BLOCKED — ACTIVATING AMBIENT MIC SENSOR",
+  "@drmWarningBanner": {
+    "description": "LCARS warning banner shown when DRM failover is triggered"
+  },
+
+  "audioModeInternal": "INTERNAL",
+  "@audioModeInternal": {
+    "description": "Label for internal audio capture mode"
+  },
+
+  "audioModeExternal": "EXTERNAL",
+  "@audioModeExternal": {
+    "description": "Label for external (microphone) audio capture mode"
+  },
+
+  "audioModeHybrid": "HYBRID",
+  "@audioModeHybrid": {
+    "description": "Label for hybrid audio capture mode"
   }
 }

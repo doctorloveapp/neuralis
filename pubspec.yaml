@@ -33,6 +33,9 @@ dev_dependencies:
 
   # Mock per unit test
   mocktail: ^1.0.4
+
+  # App icon generator
+  flutter_launcher_icons: ^0.14.1
   # NOTE: riverpod_generator e build_runner rimossi per conflitto analyzer
   # con Flutter SDK 3.38.5. I pattern Notifier/AsyncNotifier di Riverpod 3.x
   # hanno boilerplate minimo e non richiedono code generation.
@@ -40,6 +43,27 @@ dev_dependencies:
 # ⛔ VIETATO aggiungere: flutter_audio_visualizer, system_alert_window,
 #    o qualsiasi pacchetto nativo non elencato sopra.
 #    Tutta la comunicazione nativa è custom via MethodChannel/EventChannel.
+
+# ── WORKAROUND: Dart SDK bug con path contenenti spazi (Windows) ──────────
+# objective_c >= 7.x ha introdotto native build hooks che Dart SDK invoca
+# senza quotare il path — rotto su "C:\...\gemini CLI\...".
+# Forziamo 6.0.0 (ultima versione senza hooks). Sicuro per Android.
+# path_provider_foundation 2.6.0 dipende da objective_c 9.x: override alla
+# versione 2.3.2 che usa objective_c <=6.x (solo iOS/macOS — Android ignora).
+# Rimuovere entrambi se il progetto viene spostato in un path senza spazi.
+# Ref: https://github.com/dart-lang/sdk/issues/55406
+dependency_overrides:
+  objective_c: 6.0.0
+  path_provider_foundation: 2.3.2
+
+# ── App Launcher Icon ──────────────────────────────────────────────────────
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo_neuralis.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/logo_neuralis.png"
+  min_sdk_android: 21
 
 flutter:
   generate: true
