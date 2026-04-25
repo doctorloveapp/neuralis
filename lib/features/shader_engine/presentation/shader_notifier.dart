@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../preset/domain/entities/neuralis_preset.dart';
 import '../domain/entities/wavefront_uniforms.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +110,17 @@ class ShaderNotifier extends AsyncNotifier<ShaderState> {
     }
   }
 
-  /// Aggiorna le bande FFT correnti (chiamato dall'AudioNotifier).
+  /// Aggiorna il preset attivo: cambia colori e geometria dello shader.
+  /// Chiamato dal [PresetNotifier] ogni volta che NavPad cicla.
+  void updatePreset(PresetData preset) {
+    final current = state.asData?.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      uniforms: current.uniforms.withPreset(preset),
+    ));
+  }
+
+  /// Aggiorna le bande FFT correnti.
   /// Difesa in profondità: clampa ogni banda in [0.0, 1.0] e
   /// valida che la lista abbia esattamente 32 elementi.
   void updateAudio(List<double> bands) {

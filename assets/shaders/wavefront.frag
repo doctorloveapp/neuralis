@@ -1,7 +1,22 @@
 #include <flutter/runtime_effect.glsl>
 
-// Neuralis — wavefront.frag v6.0
-// Fix: rampa Y verticale, rotazione NavPad, colori slow-evolving LCARS
+// ============================================================================
+// Neuralis — wavefront.frag  v7.1  (Multiverse Preset + Terrain + CamDist)
+//
+// Uniform layout (indici Dart — NON modificare ordine):
+//   0        → uTime
+//   1-2      → uResolution
+//   3-34     → uAudioBand0..7  (8×vec4 = 32 float)
+//   35-36    → uBending        (x=rotazione, y=tilt)
+//   37-39    → uColorBase      (vec3)
+//   40-42    → uColorMid       (vec3)
+//   43-45    → uColorPeak      (vec3)
+//   46       → uFov
+//   47       → uMeshW
+//   48       → uLineWeight
+//   49       → uWaveSpeed
+//   50       → uCamDist
+// ============================================================================
 
 uniform float uTime;
 uniform vec2  uResolution;
@@ -9,27 +24,24 @@ uniform vec4  uAudioBand0; uniform vec4  uAudioBand1;
 uniform vec4  uAudioBand2; uniform vec4  uAudioBand3;
 uniform vec4  uAudioBand4; uniform vec4  uAudioBand5;
 uniform vec4  uAudioBand6; uniform vec4  uAudioBand7;
-uniform vec2  uBending;   // .x=rotazione NavPad  .y=tilt verticale
+uniform vec2  uBending;
+uniform vec3  uColorBase;
+uniform vec3  uColorMid;
+uniform vec3  uColorPeak;
+uniform float uFov;
+uniform float uMeshW;
+uniform float uLineWeight;
+uniform float uWaveSpeed;
+uniform float uCamDist;    // distanza camera dal piano mesh (>= MESH_D + 0.3)
 
 out vec4 fragColor;
 
-// ── Palette LCARS ─────────────────────────────────────────────────────────────
-const vec3 COL_DEEP    = vec3(0.030, 0.050, 0.150); // blu abissale (riposo)
-const vec3 COL_TEAL    = vec3(0.000, 0.780, 0.900); // ciano #00C7E6
-const vec3 COL_LAVEND  = vec3(0.600, 0.500, 0.950); // lavanda #9980F2
-const vec3 COL_ATOMIC  = vec3(1.000, 0.600, 0.000); // atomic orange #FF9900
-const vec3 COL_WHITE   = vec3(0.930, 0.950, 1.000); // bianco freddo
-
-// ── Costanti (vedi tuning.md per range sicuri) ────────────────────────────────
+// ── Costanti fisse ────────────────────────────────────────────────────────────
 const int   COLS        = 16;
-const int   ROWS        = 12;
-const float CAM_DIST    = 2.5;  // SICUREZZA: deve essere > MESH_D + 0.3
+const int   ROWS        = 14;
 const float MESH_D      = 1.8;
-const float MESH_W      = 0.72;
-const float FOV         = 0.90;
-const float LW          = 0.004;
-const float VERT_SPREAD = 1.20; // rampa Y: 0.0=piatto, 1.2=default, 2.0=verticale esagerato
-const float DISP_Y      = 0.50; // displacement audio (vedi tuning.md)
+const float VERT_SPREAD = 1.20;
+const float DISP_Y      = 0.55;
 
 // ── FFT lookup ────────────────────────────────────────────────────────────────
 float getAudio(int i) {
@@ -57,114 +69,112 @@ float audioBandAt(float nx) {
     return mix(getAudio(iLo), getAudio(iHi), fract(idx));
 }
 
+// ── Terrain Engine: onde composte organiche ───────────────────────────────────
+// uWaveSpeed = 0.0 → CYBER statico; 2.8 → HYPERSPACE velocissimo
+float terrainY(float nx, float nz, float fftVal) {
+    float t    = uTime * uWaveSpeed;
+    float xArg = nx * 6.283 + t;
+    float zArg = nz * 4.712 + t * 0.7;
+
+    // Onda principale: FFT × sin(x+t) × cos(z+t)
+    float mainWave = fftVal * sin(xArg) * cos(zArg);
+
+    // Rumore organico ai bordi (fluttua lentamente indipendente dal basso)
+    float edgeFactor  = 1.0 - abs(nx * 2.0 - 1.0);
+    float borderNoise = (1.0 - edgeFactor)
+                      * sin(nx * 12.5 + uTime * 0.3)
+                      * cos(nz *  9.4 + uTime * 0.25)
+                      * 0.08;
+
+    // Valle centrale: audio più evidente al centro
+    float centralAmp = 0.3 + edgeFactor * 0.7;
+    return (mainWave * centralAmp + borderNoise) * DISP_Y;
+}
+
 float distSeg(vec2 p, vec2 a, vec2 b) {
-    vec2 ab = b-a;
-    return length(p-a-clamp(dot(p-a,ab)/(dot(ab,ab)+1e-5),0.0,1.0)*ab);
+    vec2 ab = b - a;
+    return length(p - a - clamp(dot(p-a,ab)/(dot(ab,ab)+1e-5),0.0,1.0)*ab);
 }
 
-// Proiezione con rotazione Y-axis NavPad (uBending.x)
+// ── Proiezione: rotazione Y-axis (NavPad swipe) + uCamDist per preset ─────────
 vec2 proj(vec3 p) {
-    float angle = uBending.x * 0.55; // max ~31° rotazione
-    float cosA  = cos(angle);
-    float sinA  = sin(angle);
-    // Ruota intorno al centro della mesh (z = MESH_D/2)
-    float dz = p.z - MESH_D * 0.5;
-    float rx  = p.x * cosA - dz * sinA;
-    float rz  = dz * cosA + p.x * sinA + MESH_D * 0.5;
-    float dist = max(rz + CAM_DIST, 0.15);
-    return vec2(rx, p.y) * (FOV / dist);
+    float angle = uBending.x * 0.55;
+    float cosA  = cos(angle); float sinA = sin(angle);
+    float dz    = p.z - MESH_D * 0.5;
+    float rx    = p.x * cosA - dz * sinA;
+    float rz    = dz * cosA + p.x * sinA + MESH_D * 0.5;
+    return vec2(rx, p.y) * (uFov / max(rz + uCamDist, 0.15));
 }
 
-// Colore LCARS slow-evolving:
-// - huePhase: ciclo lento autonomo (~80s) = calma
-// - agitation: energia totale istantanea = agitazione
-// - energy: energia locale della cella
-vec3 lcarsColor(float energy, float zNorm, float huePhase, float agitation) {
-    // Fase calma: oscilla tra teal e lavanda
-    vec3 calmCol  = mix(COL_TEAL, COL_LAVEND, huePhase);
-    // Fase attiva: atomic → bianco
-    float tPeak   = clamp((agitation - 0.45) * 3.0, 0.0, 1.0);
-    vec3  hotCol  = mix(COL_ATOMIC, COL_WHITE, tPeak);
-    // Blend locale: energia della cella guida transizione calma→caldo
-    float tLocal  = clamp(energy * 4.5 + agitation * 1.8, 0.0, 1.0);
+// ── Colore preset-driven con slow evolution ────────────────────────────────────
+vec3 presetColor(float energy, float zNorm, float huePhase, float agitation) {
+    vec3 calmCol  = mix(uColorBase, uColorMid, huePhase);
+    float tPeak   = clamp((agitation - 0.4) * 3.2, 0.0, 1.0);
+    vec3  hotCol  = mix(uColorMid, uColorPeak, tPeak);
+    float tLocal  = clamp(energy * 4.5 + agitation * 2.0, 0.0, 1.0);
     vec3  col     = mix(calmCol, hotCol, tLocal);
-    // Z-depth: righe lontane più scure/fredde
-    col = mix(col, COL_DEEP, zNorm * 0.40);
+    col = mix(col, uColorBase * 0.3, zNorm * 0.35);
     return col;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 void main() {
     vec2  fc  = FlutterFragCoord().xy;
     float asp = uResolution.x / uResolution.y;
     vec2  uv  = (fc / uResolution - 0.5) * vec2(asp, 1.0);
 
-    // ── Energia globale (calma/agitazione) ───────────────────────────────────
+    // Energia totale istantanea
     float totalE = (dot(uAudioBand0,vec4(0.25)) + dot(uAudioBand1,vec4(0.25))
                   + dot(uAudioBand2,vec4(0.25)) + dot(uAudioBand3,vec4(0.25))
                   + dot(uAudioBand4,vec4(0.25)) + dot(uAudioBand5,vec4(0.25))
                   + dot(uAudioBand6,vec4(0.25)) + dot(uAudioBand7,vec4(0.25))) / 8.0;
 
-    // Ciclo lento autonomo palette ~80s (calma = colori freddi oscillanti)
+    // Ciclo lento palette (~80s period) — calma vs agitazione
     float huePhase = sin(uTime * 0.079) * 0.5 + 0.5;
 
-    // Calcoli invarianti
-    float fCols   = float(COLS);
-    float fRows   = float(ROWS);
-    float tiltAmt = sin(uTime * 0.12) * 0.05;
-
+    float fCols = float(COLS); float fRows = float(ROWS);
     float accumR = 0.0, accumG = 0.0, accumB = 0.0, accumW = 0.0;
 
     for (int row = 0; row < ROWS; row++) {
         float nz0 = float(row)     / fRows;
         float nz1 = float(row + 1) / fRows;
         float z0  = nz0 * MESH_D;
-        float z1  = nz1 * MESH_D;
 
-        float zFade = 1.0 - smoothstep(MESH_D * 0.55, MESH_D * 0.90, z0);
+        float zFade = 1.0 - smoothstep(MESH_D * 0.55, MESH_D * 0.92, z0);
         if (zFade < 0.02) continue;
 
-        // ── RAMPA VERTICALE: fronte basso, retro alto ─────────────────────────
-        // Questo è il fix principale per l'appiattimento verticale.
-        // Offset Y: row 0 (front) → basso, row ROWS-1 (back) → alto
-        float yBase0 = (nz0 - 0.25) * VERT_SPREAD + uBending.y * 0.25;
-        float yBase1 = (nz1 - 0.25) * VERT_SPREAD + uBending.y * 0.25;
-
-        float wave0  = sin(uTime * 0.65 + z0 * 2.4) * 0.025;
-        float wave1  = sin(uTime * 0.65 + z1 * 2.4) * 0.025;
-        float tilt0  = z0 * tiltAmt;
-        float tilt1  = z1 * tiltAmt;
+        // Rampa verticale (fix mesh piatta) + tilt NavPad Y
+        float yRamp0 = (nz0 - 0.25) * VERT_SPREAD + uBending.y * 0.25;
+        float yRamp1 = ((nz0 + 1.0/fRows) - 0.25) * VERT_SPREAD + uBending.y * 0.25;
 
         for (int col = 0; col < COLS; col++) {
             float nx0 = float(col)     / fCols;
             float nx1 = float(col + 1) / fCols;
+            float xw0 = (nx0 * 2.0 - 1.0) * uMeshW;
+            float xw1 = (nx1 * 2.0 - 1.0) * uMeshW;
 
-            float xw0 = (nx0 * 2.0 - 1.0) * MESH_W;
-            float xw1 = (nx1 * 2.0 - 1.0) * MESH_W;
+            float fft0 = audioBandAt(nx0);
+            float fft1 = audioBandAt(nx1);
+            float dy00 = terrainY(nx0, nz0, fft0);
+            float dy10 = terrainY(nx1, nz0, fft1);
+            float dy01 = terrainY(nx0, nz0 + 1.0/fRows, fft0);
+            float dy11 = terrainY(nx1, nz0 + 1.0/fRows, fft1);
 
-            float sym0 = 1.0 - abs(nx0 * 2.0 - 1.0);
-            float sym1 = 1.0 - abs(nx1 * 2.0 - 1.0);
-            float d0   = audioBandAt(sym0) * DISP_Y;
-            float d1   = audioBandAt(sym1) * DISP_Y;
+            vec2 p00 = proj(vec3(xw0, dy00 + yRamp0, z0));
+            vec2 p10 = proj(vec3(xw1, dy10 + yRamp0, z0));
+            vec2 p01 = proj(vec3(xw0, dy01 + yRamp1, z0 + MESH_D/fRows));
+            vec2 p11 = proj(vec3(xw1, dy11 + yRamp1, z0 + MESH_D/fRows));
 
-            vec2 p00 = proj(vec3(xw0, d0 + yBase0 + wave0 + tilt0, z0));
-            vec2 p10 = proj(vec3(xw1, d1 + yBase0 + wave0 + tilt0, z0));
-            vec2 p01 = proj(vec3(xw0, d0 + yBase1 + wave1 + tilt1, z1));
-            vec2 p11 = proj(vec3(xw1, d1 + yBase1 + wave1 + tilt1, z1));
-
-            float energy = (d0 + d1) * 0.5;
+            float energy = (fft0 + fft1) * 0.5;
 
             float dG = min(distSeg(uv, p00, p10), distSeg(uv, p00, p01));
-            float dB = dG;
-            float dR = dG;
-
             if (row == ROWS-1) dG = min(dG, distSeg(uv, p01, p11));
             if (col == COLS-1) dG = min(dG, distSeg(uv, p10, p11));
-            dR = dG; dB = dG;
 
-            float line = smoothstep(LW, LW * 0.15, dG);
+            float lw   = uLineWeight;
+            float line = smoothstep(lw, lw * 0.15, dG);
 
-            vec3 col3 = lcarsColor(energy / DISP_Y, nz0, huePhase, totalE);
-
+            vec3 col3 = presetColor(energy, nz0, huePhase, totalE);
             accumR += col3.r * line * zFade;
             accumG += col3.g * line * zFade;
             accumB += col3.b * line * zFade;

@@ -76,12 +76,18 @@ class AudioNotifier extends AsyncNotifier<AudioState> {
     _drmSub = null;
   }
 
-  /// Gain corrente applicato alle bande FFT basse (aggiornato dall'InteractionController).
+  /// Gain corrente applicato alle bande FFT basse.
   double _bassGain = 1.0;
 
-  /// Chiamato dall'[InteractionController] ad ogni tick per aggiornare il gain.
-  /// Zero-allocazione: aggiorna solo il campo locale.
+  /// Numero di bande FFT amplificate (aggiornato dal preset).
+  /// CYBER=4 (kick puro), default=8, HYPERSPACE=12.
+  int _bassBands = 8;
+
+  /// Aggiorna il gain dal [InteractionController] ad ogni tick.
   void setBassGain(double gain) => _bassGain = gain;
+
+  /// Aggiorna il numero di bande amplificate in base al preset attivo.
+  void setBassBands(int bands) => _bassBands = bands;
 
   /// Instrada i dati FFT allo [ShaderNotifier] applicando il bassGain locale
   /// (bands 0–7 × gain, clampa in [0.0, 1.0]).
@@ -90,10 +96,10 @@ class AudioNotifier extends AsyncNotifier<AudioState> {
       // Applica gain alle bande basse senza allocare nuova lista se gain == 1.0
       final List<double> bands;
       if ((_bassGain - 1.0).abs() < 0.01) {
-        bands = fftData.bands; // gain neutro: nessuna allocazione
+        bands = fftData.bands;
       } else {
         bands = List<double>.from(fftData.bands);
-        for (int i = 0; i < 8 && i < bands.length; i++) {
+        for (int i = 0; i < _bassBands && i < bands.length; i++) {
           bands[i] = (bands[i] * _bassGain).clamp(0.0, 1.0);
         }
       }

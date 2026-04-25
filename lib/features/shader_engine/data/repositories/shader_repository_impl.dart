@@ -65,12 +65,19 @@ class ShaderRepositoryImpl implements ShaderRepository {
   ///
   ///   Index 0      → uTime
   ///   Index 1-2    → uResolution (x, y)
-  ///   Index 3-34   → uAudioFrequency[0..31]
+  ///   Index 3-34   → uAudioBand0..7 (32 float)
   ///   Index 35-36  → uBending (x, y)
+  ///   Index 37-39  → uColorBase (r, g, b)
+  ///   Index 40-42  → uColorMid  (r, g, b)
+  ///   Index 43-45  → uColorPeak (r, g, b)
+  ///   Index 46     → uFov
+  ///   Index 47     → uMeshW
+  ///   Index 48     → uLineWeight
+  ///   Index 49     → uWaveSpeed
   @override
   void updateUniforms(WavefrontUniforms uniforms) {
     final shader = _shader;
-    if (shader == null) return; // shader non ancora caricato
+    if (shader == null) return;
 
     shader.setFloat(0, uniforms.time.toDouble());
     shader.setFloat(1, uniforms.resolution.dx);
@@ -82,6 +89,26 @@ class ShaderRepositoryImpl implements ShaderRepository {
 
     shader.setFloat(35, uniforms.bending.dx);
     shader.setFloat(36, uniforms.bending.dy);
+
+    // ── Colori preset (vec3 → 3 float ciascuno) ───────────────────────────
+    shader.setFloat(37, uniforms.colorBase.r);
+    shader.setFloat(38, uniforms.colorBase.g);
+    shader.setFloat(39, uniforms.colorBase.b);
+
+    shader.setFloat(40, uniforms.colorMid.r);
+    shader.setFloat(41, uniforms.colorMid.g);
+    shader.setFloat(42, uniforms.colorMid.b);
+
+    shader.setFloat(43, uniforms.colorPeak.r);
+    shader.setFloat(44, uniforms.colorPeak.g);
+    shader.setFloat(45, uniforms.colorPeak.b);
+
+    // ── Geometria preset ──────────────────────────────────────────────────
+    shader.setFloat(46, uniforms.fov);
+    shader.setFloat(47, uniforms.meshW);
+    shader.setFloat(48, uniforms.lineWeight);
+    shader.setFloat(49, uniforms.waveSpeed);
+    shader.setFloat(50, uniforms.camDist);
   }
 
   // ─────────────────────────────────────────────────────────────────────

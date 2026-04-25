@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/providers.dart';
+import '../../../features/preset/domain/entities/neuralis_preset.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InteractionState — stato immutabile dei pad interattivi
@@ -82,21 +83,18 @@ class InteractionController extends Notifier<InteractionState> {
   // ── Stato interno del boost ───────────────────────────────────────────────
   bool _isBoostActive = false;
 
-  // ── Costanti di interpolazione ────────────────────────────────────────────
+  // ── Costanti di interpolazione (sostituite da preset in _onTick) ──────────
 
-  /// Velocità salita bass (ease-in esponenziale): ~0.25s a pieno boost.
-  static const double _bassRiseSpeed  = 6.0;
+  /// Velocità salita bass (ease-in esponenziale): default SYNTHWAVE.
+  static const double _bassRiseSpeed  = 7.0;
 
-  /// Velocità discesa bass (ease-out): ~300ms.
-  static const double _bassDecaySpeed = 5.0;
+  /// Velocità discesa bass (ease-out): default SYNTHWAVE.
+  static const double _bassDecaySpeed = 4.0;
 
-  /// Velocità ritorno bending a zero (ease-out): ~450ms.
-  static const double _bendingDecaySpeed = 3.2;
+  /// Velocità ritorno bending a zero (ease-out): default.
+  static const double _bendingDecaySpeed = 3.5;
 
-  /// Gain massimo BassPad — esplosione visiva.
-  static const double _maxBassGain = 8.0;
-
-  /// Soglia sotto cui i valori vengono forzati a zero (evita float residui).
+  /// Soglia sotto cui i valori vengono forzati a zero.
   static const double _epsilon = 0.002;
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -134,9 +132,14 @@ class InteractionController extends Notifier<InteractionState> {
   ///   dx = delta.dx / padWidth, dy = delta.dy / padHeight
   void onNavPadUpdate(double normalizedDx, double normalizedDy) {
     final current = state;
-    // 5.4 = 3× la sensibilità precedente (era 1.8) → bending molto più reattivo
-    final newX = (current.bendingX + normalizedDx * 5.4).clamp(-1.0, 1.0);
-    final newY = (current.bendingY + normalizedDy * 5.4).clamp(-1.0, 1.0);
+    // Sensibilità dal preset attivo (NEBULA=2.0, default=5.4, HYPER=6.0)
+    double sensitivity = 5.4;
+    try {
+      final activePreset = ref.read(presetNotifierProvider);
+      sensitivity = PresetLibrary.of(activePreset).navSensitivity;
+    } catch (_) {}
+    final newX = (current.bendingX + normalizedDx * sensitivity).clamp(-1.0, 1.0);
+    final newY = (current.bendingY + normalizedDy * sensitivity).clamp(-1.0, 1.0);
 
     state = current.copyWith(bendingX: newX, bendingY: newY);
     HapticFeedback.selectionClick();
@@ -170,31 +173,42 @@ class InteractionController extends Notifier<InteractionState> {
     double newBendY   = current.bendingY;
     bool   changed    = false;
 
+    // ── Leggi fisica dal preset attivo ────────────────────────────────────
+    PresetData? preset;
+    try {
+      final activePreset = ref.read(presetNotifierProvider);
+      preset = PresetLibrary.of(activePreset);
+    } catch (_) {
+      // Preset non ancora inizializzato
+    }
+    final maxGain    = preset?.maxBassGain       ?? 8.0;
+    final riseSpeed  = preset?.bassRiseSpeed      ?? _bassRiseSpeed;
+    final decaySpeed = preset?.bassDecaySpeed     ?? _bassDecaySpeed;
+    final bendDecay  = preset?.bendingDecaySpeed  ?? _bendingDecaySpeed;
+
     // ── Bass gain ─────────────────────────────────────────────────────
     if (_isBoostActive) {
-      // Salita esponenziale verso _maxBassGain (8.0)
-      final next = newGain + (_maxBassGain - newGain) * dt * _bassRiseSpeed;
+      final next = newGain + (maxGain - newGain) * dt * riseSpeed;
       if ((next - newGain).abs() > _epsilon) {
-        newGain = next.clamp(1.0, _maxBassGain);
+        newGain = next.clamp(1.0, maxGain);
         changed = true;
       }
     } else if (newGain > 1.0 + _epsilon) {
-      // Discesa ease-out verso 1.0
-      final next = newGain + (1.0 - newGain) * dt * _bassDecaySpeed;
-      newGain = next < 1.0 + _epsilon ? 1.0 : next.clamp(1.0, _maxBassGain);
+      final next = newGain + (1.0 - newGain) * dt * decaySpeed;
+      newGain = next < 1.0 + _epsilon ? 1.0 : next.clamp(1.0, maxGain);
       changed = true;
     }
 
     // ── Bending X ─────────────────────────────────────────────────────
     if (newBendX.abs() > _epsilon) {
-      final next = newBendX + (0.0 - newBendX) * dt * _bendingDecaySpeed;
+      final next = newBendX + (0.0 - newBendX) * dt * bendDecay;
       newBendX = next.abs() < _epsilon ? 0.0 : next.clamp(-1.0, 1.0);
       changed = true;
     }
 
     // ── Bending Y ─────────────────────────────────────────────────────
     if (newBendY.abs() > _epsilon) {
-      final next = newBendY + (0.0 - newBendY) * dt * _bendingDecaySpeed;
+      final next = newBendY + (0.0 - newBendY) * dt * bendDecay;
       newBendY = next.abs() < _epsilon ? 0.0 : next.clamp(-1.0, 1.0);
       changed = true;
     }
@@ -207,12 +221,14 @@ class InteractionController extends Notifier<InteractionState> {
       bendingY: newBendY,
     );
 
-    // ── Routing → ShaderNotifier (bending + bassGain come uniform aggiuntivo) ──
+    // ── Routing → ShaderNotifier + AudioNotifier ────────────────────────────────
     try {
       final shaderNotifier = ref.read(shaderNotifierProvider.notifier);
       shaderNotifier.updateBending(Offset(newBendX, newBendY));
-      // Passa bassGain all'AudioNotifier che lo applica alle bande FFT
-      ref.read(audioNotifierProvider.notifier).setBassGain(newGain);
+      final audioNotifier = ref.read(audioNotifierProvider.notifier);
+      audioNotifier.setBassGain(newGain);
+      // Aggiorna bassBands dal preset
+      audioNotifier.setBassBands(preset?.bassBands ?? 8);
     } catch (_) {
       // Shader/Audio non ancora inizializzati — ignorare silenziosamente
     }

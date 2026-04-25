@@ -13,6 +13,8 @@ import '../../features/audio_engine/presentation/audio_state.dart';
 import '../../features/interaction/presentation/interaction_controller.dart';
 import '../../features/overlay_ui/presentation/notifiers/overlay_notifier.dart';
 import '../../features/overlay_ui/presentation/states/overlay_state.dart';
+import '../../features/preset/domain/entities/neuralis_preset.dart';
+import '../../features/preset/presentation/preset_notifier.dart';
 import '../../features/shader_engine/data/repositories/shader_repository_impl.dart';
 import '../../features/shader_engine/presentation/shader_notifier.dart';
 import '../services/permission_service.dart';
@@ -55,6 +57,17 @@ final overlayNotifierProvider =
     NotifierProvider<OverlayNotifier, OverlayState>(
   OverlayNotifier.new,
   name: 'overlayNotifierProvider',
+);
+
+// ═══════════════════════════════════════════════════════════════════════
+// PRESET SYSTEM — Multiverse
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Preset attivo del Multiverse System. Tap su NAV cicla al preset successivo.
+final presetNotifierProvider =
+    NotifierProvider<PresetNotifier, NeuralisPreset>(
+  PresetNotifier.new,
+  name: 'presetNotifierProvider',
 );
 
 // ═══════════════════════════════════════════════════════════════════════

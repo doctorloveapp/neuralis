@@ -4,111 +4,123 @@
 /// Posizione: lib/features/shader_engine/domain/entities/wavefront_uniforms.dart
 library;
 
-import 'dart:ui' show Offset;
+import 'dart:ui' show Color, Offset;
 
 import '../../../audio_engine/domain/entities/fft_data.dart';
+import '../../../preset/domain/entities/neuralis_preset.dart';
 
 // ---------------------------------------------------------------------------
 // WavefrontUniforms — uniforms GLSL aggiornati ogni frame
 // ---------------------------------------------------------------------------
 
-/// Raccolta di tutti gli uniforms passati al fragment shader `wavefront.frag`
-/// ad ogni frame di rendering.
+/// Raccolta di tutti gli uniforms passati al fragment shader `wavefront.frag`.
 ///
-/// Corrisponde 1:1 agli uniforms definiti nello shader GLSL:
-///   - `uniform float uTime`                → [time]
-///   - `uniform vec2  uResolution`          → [resolution]
-///   - `uniform float uAudioFrequency[32]`  → [audioFrequency] (da [FFTData])
-///   - `uniform vec2  uBending`             → [bending]
-///
-/// Ordine di scrittura in WavefrontPainter.paint() (ARCHITECTURE.md §6):
+/// Layout indici (ARCHITECTURE.md §6):
 ///   Index 0      → uTime
 ///   Index 1–2    → uResolution (x, y)
-///   Index 3–34   → uAudioFrequency[0..31]
+///   Index 3–34   → uAudioBand0..7 (8×vec4 = 32 float)
 ///   Index 35–36  → uBending (x, y)
-///
-/// NOTA: [dart:ui.Offset] è l'unica dipendenza dart:ui ammessa qui
-/// poiché rappresenta un concetto matematico puro (coppia di double),
-/// non un'entità di rendering. Il [FragmentShader] rimane incapsulato
-/// esclusivamente nel layer Data.
+///   Index 37–39  → uColorBase (r, g, b)
+///   Index 40–42  → uColorMid  (r, g, b)
+///   Index 43–45  → uColorPeak (r, g, b)
+///   Index 46     → uFov
+///   Index 47     → uMeshW
+///   Index 48     → uLineWeight
+///   Index 49     → uWaveSpeed
+///   Index 50     → uCamDist
 class WavefrontUniforms {
   const WavefrontUniforms({
     required this.time,
     required this.resolution,
     required this.audioFrequency,
     required this.bending,
+    required this.colorBase,
+    required this.colorMid,
+    required this.colorPeak,
+    required this.fov,
+    required this.meshW,
+    required this.lineWeight,
+    required this.waveSpeed,
+    required this.camDist,
   });
 
-  /// Secondi trascorsi dall'avvio dell'app (uTime).
-  /// Usato dallo shader per la rotazione animata della griglia 3D.
-  final double time;
+  final double       time;
+  final Offset       resolution;
+  final List<double> audioFrequency;  // 32 bande FFT normalizzate
+  final Offset       bending;
 
-  /// Dimensioni del canvas in pixel (uResolution).
-  /// Aggiornato quando il canvas viene ridimensionato.
-  final Offset resolution;
+  // ── Parametri preset ──────────────────────────────────────────────────────
+  final Color  colorBase;
+  final Color  colorMid;
+  final Color  colorPeak;
+  final double fov;
+  final double meshW;
+  final double lineWeight;
+  final double waveSpeed;
+  final double camDist;   // distanza camera — index 50
 
-  /// 32 bande FFT normalizzate [0.0, 1.0] (uAudioFrequency[32]).
-  /// Derivate da [FFTData.bands], con bassGain applicato alle bande 0–7.
-  ///
-  /// Deve avere esattamente [FFTData.bandCount] = 32 elementi.
-  final List<double> audioFrequency;
+  /// Uniforms iniziali con preset SYNTHWAVE di default.
+  factory WavefrontUniforms.initial() {
+    final def = PresetLibrary.of(NeuralisPreset.synthwave);
+    return WavefrontUniforms(
+      time:           0.0,
+      resolution:     const Offset(1080, 1920),
+      audioFrequency: List.filled(FFTData.bandCount, 0.0, growable: false),
+      bending:        Offset.zero,
+      colorBase:      def.colorBase,
+      colorMid:       def.colorMid,
+      colorPeak:      def.colorPeak,
+      fov:            def.fov,
+      meshW:          def.meshW,
+      lineWeight:     def.lineWeight,
+      waveSpeed:      def.waveSpeed,
+      camDist:        def.camDist,
+    );
+  }
 
-  /// Vettore di bending dal NavPad (uBending).
-  /// Entrambi gli assi in [-1.0, 1.0].
-  /// Attiva l'aberrazione cromatica quando length > ShaderParams.bendingThreshold.
-  final Offset bending;
-
-  /// Uniforms di silenzio — usati come valore iniziale prima della cattura audio.
-  factory WavefrontUniforms.initial() => WavefrontUniforms(
-        time: 0.0,
-        resolution: const Offset(1080, 1920), // placeholder — aggiornato al primo frame
-        audioFrequency: List.filled(FFTData.bandCount, 0.0, growable: false),
-        bending: Offset.zero,
+  WavefrontUniforms copyWith({
+    double?       time,
+    Offset?       resolution,
+    List<double>? audioFrequency,
+    Offset?       bending,
+    Color?        colorBase,
+    Color?        colorMid,
+    Color?        colorPeak,
+    double?       fov,
+    double?       meshW,
+    double?       lineWeight,
+    double?       waveSpeed,
+    double?       camDist,
+  }) =>
+      WavefrontUniforms(
+        time:           time           ?? this.time,
+        resolution:     resolution     ?? this.resolution,
+        audioFrequency: audioFrequency ?? this.audioFrequency,
+        bending:        bending        ?? this.bending,
+        colorBase:      colorBase      ?? this.colorBase,
+        colorMid:       colorMid       ?? this.colorMid,
+        colorPeak:      colorPeak      ?? this.colorPeak,
+        fov:            fov            ?? this.fov,
+        meshW:          meshW          ?? this.meshW,
+        lineWeight:     lineWeight     ?? this.lineWeight,
+        waveSpeed:      waveSpeed      ?? this.waveSpeed,
+        camDist:        camDist        ?? this.camDist,
       );
 
-  /// Crea gli uniforms applicando il [bassGain] alle bande basse (0–7).
-  ///
-  /// [fftData] → dati FFT grezzi dal repository audio.
-  /// [bassGain] → moltiplicatore dal [BassPad], range [0.5, 3.0].
-  /// Valori clampati a [0.0, 1.0] dopo l'applicazione del gain.
-  factory WavefrontUniforms.fromFFT({
-    required double time,
-    required Offset resolution,
-    required FFTData fftData,
-    required Offset bending,
-    double bassGain = 1.0,
-  }) {
-    final bands = List<double>.from(fftData.bands);
-    // Applica bassGain alle bande 0–7 (frequenze basse) e clampa in [0.0, 1.0]
-    for (int i = 0; i < 8 && i < bands.length; i++) {
-      bands[i] = (bands[i] * bassGain).clamp(0.0, 1.0);
-    }
-    return WavefrontUniforms(
-      time: time,
-      resolution: resolution,
-      audioFrequency: bands,
-      bending: bending,
-    );
-  }
-
-  /// Crea una copia con i valori specificati sostituiti.
-  WavefrontUniforms copyWith({
-    double? time,
-    Offset? resolution,
-    List<double>? audioFrequency,
-    Offset? bending,
-  }) {
-    return WavefrontUniforms(
-      time: time ?? this.time,
-      resolution: resolution ?? this.resolution,
-      audioFrequency: audioFrequency ?? this.audioFrequency,
-      bending: bending ?? this.bending,
-    );
-  }
+  /// Copia con i parametri di un [PresetData].
+  WavefrontUniforms withPreset(PresetData preset) => copyWith(
+        colorBase:  preset.colorBase,
+        colorMid:   preset.colorMid,
+        colorPeak:  preset.colorPeak,
+        fov:        preset.fov,
+        meshW:      preset.meshW,
+        lineWeight: preset.lineWeight,
+        waveSpeed:  preset.waveSpeed,
+        camDist:    preset.camDist,
+      );
 
   @override
   String toString() =>
       'WavefrontUniforms(t: ${time.toStringAsFixed(2)}s, '
-      'res: ${resolution.dx.toInt()}x${resolution.dy.toInt()}, '
       'bend: (${bending.dx.toStringAsFixed(2)}, ${bending.dy.toStringAsFixed(2)}))';
 }

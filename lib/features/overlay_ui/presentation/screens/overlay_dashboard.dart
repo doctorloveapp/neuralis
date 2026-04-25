@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart';
@@ -16,6 +17,7 @@ import '../../../../shared/widgets/lcars_elbow.dart';
 import '../../../../shared/widgets/lcars_status_bar.dart';
 import '../../../../shared/widgets/lcars_warning_banner.dart';
 import '../../../audio_engine/domain/entities/audio_entity.dart';
+import '../../../preset/domain/entities/neuralis_preset.dart';
 import '../../../shader_engine/presentation/wavefront_widget.dart';
 
 /// Schermata principale dell'overlay LCARS.
@@ -324,7 +326,7 @@ class _BassPad extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _NavPad — area swipe direzionale con feedback visivo bending
+// _NavPad — selettore preset Multiverse + swipe rotazione
 // ---------------------------------------------------------------------------
 
 class _NavPad extends StatelessWidget {
@@ -336,25 +338,33 @@ class _NavPad extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, watchRef, _) {
-        // ref.select → rebuild SOLO quando isBending cambia (bool)
-        final isBending = watchRef.watch(
+        final activePreset = watchRef.watch(presetNotifierProvider);
+        final presetData   = PresetLibrary.of(activePreset);
+        final isBending    = watchRef.watch(
           interactionControllerProvider.select((s) => s.isBending),
         );
 
-        final borderColor = LcarsColors.withAlpha(
-          isBending ? LcarsColors.purple : LcarsColors.blueGray,
-          isBending ? 0.75 : 0.40,
-        );
-        final bgColor = LcarsColors.withAlpha(
-          isBending ? LcarsColors.purple : LcarsColors.blueGray,
-          isBending ? 0.18 : 0.10,
-        );
-        final labelColor =
-            isBending ? LcarsColors.purple : LcarsColors.blueGray;
+        // Colore bordo dal preset attivo
+        final baseColor = presetData.colorMid;
+        final borderColor = isBending
+            ? baseColor.withAlpha(200)
+            : baseColor.withAlpha(100);
+        final bgColor = baseColor.withAlpha(isBending ? 50 : 25);
 
         return LayoutBuilder(
           builder: (context, constraints) {
             return GestureDetector(
+              // TAP: cicla al prossimo preset
+              onTap: () {
+                ref.read(presetNotifierProvider.notifier).next();
+                // Propaga il nuovo preset allo shader
+                final next = ref.read(presetNotifierProvider.notifier).current;
+                try {
+                  ref.read(shaderNotifierProvider.notifier).updatePreset(next);
+                } catch (_) {}
+                HapticFeedback.mediumImpact();
+              },
+              // SWIPE: rotazione NavPad (come v6)
               onPanUpdate: (details) {
                 final w = constraints.maxWidth.clamp(1.0, double.infinity);
                 final h = constraints.maxHeight.clamp(1.0, double.infinity);
@@ -369,20 +379,35 @@ class _NavPad extends StatelessWidget {
                   .read(interactionControllerProvider.notifier)
                   .onNavPadEnd(),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
+                duration: const Duration(milliseconds: 180),
                 height: 64,
                 decoration: BoxDecoration(
                   color:  bgColor,
-                  border: Border.all(
-                    color: borderColor,
-                    width: isBending ? 2.0 : 1.0,
-                  ),
+                  border: Border.all(color: borderColor, width: isBending ? 2.0 : 1.0),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  l10n.padNav.toUpperCase(),
-                  style: LcarsTypography.label.copyWith(color: labelColor, fontSize: 14),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'NAV: ${presetData.shortName}',
+                      style: LcarsTypography.label.copyWith(
+                        color: borderColor,
+                        fontSize: 13,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '◀ SWIPE │ TAP ▶',
+                      style: LcarsTypography.labelSmall.copyWith(
+                        color: borderColor.withAlpha(140),
+                        fontSize: 9,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
