@@ -99,13 +99,24 @@ class NeuralisForegroundService : Service() {
                 stopSelf()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY  // Il sistema riavvia il service se viene terminato
     }
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy: pulizia risorse")
         releaseMediaProjection()
         super.onDestroy()
+    }
+
+    /**
+     * Chiamato quando l'utente rimuove l'app dalla lista recenti (swipe-away).
+     * ⚠️ Con START_STICKY, il service sopravvive a questo evento.
+     * Manteniamo attiva solo la notifica persistente.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.d(TAG, "onTaskRemoved: app rimossa dai recenti — service rimane attivo")
+        // NON chiamare stopSelf(): il service deve rimanere vivo per l'overlay
+        super.onTaskRemoved(rootIntent)
     }
 
     // ─────────────────────────────────────────────────────────────────────

@@ -156,9 +156,9 @@ class _BottomPadRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
+      height: 100,
       color: LcarsColors.panelBg,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           // ── BassPad ────────────────────────────────────────────────────
@@ -226,20 +226,20 @@ class _BassPad extends StatelessWidget {
               .onBassPadReleased(),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 80),
-            width:  80,
-            height: 48,
+            width:  100,
+            height: 64,
             decoration: BoxDecoration(
               color:        LcarsColors.withAlpha(color, 0.15 + t * 0.25),
               border:       Border.all(color: color, width: 1.5 + t),
               borderRadius: const BorderRadius.only(
-                topLeft:     Radius.circular(22),
-                bottomLeft:  Radius.circular(22),
+                topLeft:     Radius.circular(28),
+                bottomLeft:  Radius.circular(28),
               ),
             ),
             alignment: Alignment.center,
             child: Text(
               l10n.padBass.toUpperCase(),
-              style: LcarsTypography.label.copyWith(color: color),
+              style: LcarsTypography.label.copyWith(color: color, fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -297,18 +297,19 @@ class _NavPad extends StatelessWidget {
                   .onNavPadEnd(),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
-                height: 48,
+                height: 64,
                 decoration: BoxDecoration(
                   color:  bgColor,
                   border: Border.all(
                     color: borderColor,
-                    width: isBending ? 1.5 : 1.0,
+                    width: isBending ? 2.0 : 1.0,
                   ),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   l10n.padNav.toUpperCase(),
-                  style: LcarsTypography.label.copyWith(color: labelColor),
+                  style: LcarsTypography.label.copyWith(color: labelColor, fontSize: 14),
                 ),
               ),
             );
