@@ -76,27 +76,31 @@ class AudioNotifier extends AsyncNotifier<AudioState> {
     _drmSub = null;
   }
 
-  /// Instrada i dati FFT allo [ShaderNotifier] applicando il bassGain
-  /// dall'[InteractionController] (bands 0–7 × gain, clampa in [0.0, 1.0]).
+  /// Gain corrente applicato alle bande FFT basse (aggiornato dall'InteractionController).
+  double _bassGain = 1.0;
+
+  /// Chiamato dall'[InteractionController] ad ogni tick per aggiornare il gain.
+  /// Zero-allocazione: aggiorna solo il campo locale.
+  void setBassGain(double gain) => _bassGain = gain;
+
+  /// Instrada i dati FFT allo [ShaderNotifier] applicando il bassGain locale
+  /// (bands 0–7 × gain, clampa in [0.0, 1.0]).
   void _routeToShader(FFTData fftData) {
     try {
-      // Legge il bassGain corrente dall'InteractionController (Notifier sync)
-      final bassGain = ref.read(interactionControllerProvider).bassGain;
-
       // Applica gain alle bande basse senza allocare nuova lista se gain == 1.0
       final List<double> bands;
-      if ((bassGain - 1.0).abs() < 0.01) {
+      if ((_bassGain - 1.0).abs() < 0.01) {
         bands = fftData.bands; // gain neutro: nessuna allocazione
       } else {
         bands = List<double>.from(fftData.bands);
         for (int i = 0; i < 8 && i < bands.length; i++) {
-          bands[i] = (bands[i] * bassGain).clamp(0.0, 1.0);
+          bands[i] = (bands[i] * _bassGain).clamp(0.0, 1.0);
         }
       }
 
       ref.read(shaderNotifierProvider.notifier).updateAudio(bands);
     } catch (_) {
-      // Shader o InteractionController non ancora pronti — ignorare
+      // Shader non ancora pronto — ignorare
     }
   }
 

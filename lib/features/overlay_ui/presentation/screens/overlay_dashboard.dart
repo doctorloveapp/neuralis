@@ -60,7 +60,10 @@ class OverlayDashboard extends ConsumerWidget {
             // ── DRM Warning Banner (condizionale) ─────────────────────────
             if (isDrmBlocked) const LcarsWarningBanner(),
 
-            // ── Area Centrale: Elbows + Wavefront placeholder ─────────────
+            // ── LAUNCH TACTICAL OVERLAY ───────────────────────────────────
+            _LaunchOverlayButton(ref: ref),
+
+            // ── Area Centrale: Elbows + Wavefront ─────────────────────────
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -68,9 +71,9 @@ class OverlayDashboard extends ConsumerWidget {
                   // Colonna sinistra: elbows verticali LCARS
                   _LeftColumn(),
 
-                  // Area centrale: WavefrontWidget (Sezione 4)
-                  Expanded(
-                    child: const WavefrontWidget(),
+                  // Area centrale: WavefrontWidget
+                  const Expanded(
+                    child: WavefrontWidget(),
                   ),
                 ],
               ),
@@ -82,6 +85,76 @@ class OverlayDashboard extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _LaunchOverlayButton — pulsante LAUNCH TACTICAL OVERLAY
+// ---------------------------------------------------------------------------
+
+class _LaunchOverlayButton extends StatelessWidget {
+  const _LaunchOverlayButton({required this.ref});
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final overlayState = ref.watch(overlayNotifierProvider);
+    final isVisible    = overlayState.isVisible;
+
+    return Container(
+      color:   LcarsColors.panelBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Indicatore stato overlay
+          Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isVisible ? LcarsColors.atomic : LcarsColors.blueGray,
+              boxShadow: isVisible ? [
+                BoxShadow(
+                  color: LcarsColors.withAlpha(LcarsColors.atomic, 0.6),
+                  blurRadius: 8, spreadRadius: 2,
+                ),
+              ] : null,
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Pulsante principale
+          Expanded(
+            child: GestureDetector(
+              onTap: () => ref.read(overlayNotifierProvider.notifier).toggle(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 44,
+                decoration: BoxDecoration(
+                  color: LcarsColors.withAlpha(
+                    isVisible ? LcarsColors.atomic : LcarsColors.blueGray,
+                    isVisible ? 0.20 : 0.10,
+                  ),
+                  border: Border.all(
+                    color: isVisible ? LcarsColors.atomic : LcarsColors.blueGray,
+                    width: isVisible ? 2.0 : 1.0,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  isVisible ? 'OVERLAY ATTIVO  ● TOCCA PER NASCONDERE' : '▶  LAUNCH TACTICAL OVERLAY',
+                  style: LcarsTypography.label.copyWith(
+                    color: isVisible ? LcarsColors.atomic : LcarsColors.blueGray,
+                    fontSize: 13,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

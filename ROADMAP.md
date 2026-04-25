@@ -421,34 +421,43 @@ per evitare ambiguità tra `Job.isActive` e `CoroutineScope.isActive` in suspend
 | Sezione 1 — Infrastruttura | ✅ Completata | Manifest ✅, Kotlin ✅, PermissionService ✅, SplashScreen ✅, Permessi Boot ✅ |
 | Sezione 2 — Audio Engine | ✅ Completata | NativeAudioCapture ✅, FFT+RMS ✅, Repository ✅, Notifier ✅ |
 | Sezione 3 — LCARS Design | ✅ Completata | Colori ✅, Tipografia ✅, Tema ✅, Elbow ✅, Button ✅, StatusBar ✅, Banner ✅, Dashboard ✅, SafeArea ✅ |
-| Sezione 4 — Shader Engine | ✅ Completata | wavefront.frag ✅, ShaderRepo ✅, WavefrontPainter ✅, ShaderNotifier ✅, WavefrontWidget ✅ |
-| Sezione 5 — Interazione | ✅ Completata | InteractionController ✅, BassPad ✅, NavPad ✅, FFT→Shader ✅, Bending→Shader ✅ |
+| Sezione 4 — Shader Engine | ✅ Completata | wavefront.frag v4 ✅, ShaderRepo ✅, WavefrontPainter ✅, ShaderNotifier ✅, WavefrontWidget ✅ |
+| Sezione 5 — Interazione | ✅ Completata | InteractionController ✅, BassPad ✅ (gain 8.0), NavPad ✅ (sens. 3x), FFT→Shader ✅, Bending→Shader ✅ |
 | Sezione 6 — Lifecycle | 🔄 In corso | App Icon ✅, Launcher Icons ✅, Lifecycle Observer ⬜ |
 | Build & Deploy | ✅ Stabile | APK debug funzionante su Samsung S911B |
 
-### 📱 Stato Device (2026-04-24)
+### 📱 Stato Device (2026-04-25) — Sprint Performance & UX
 
 | Item | Stato |
 |---|---|
 | Build APK debug | ✅ Funzionante |
 | Install su Samsung Galaxy S23 (SM-S911B) | ✅ Funzionante |
 | Splash screen con logo Neuralis | ✅ Visibile |
-| Richiesta permesso overlay al boot | ✅ Funzionante |
-| Ripresa flusso dopo ritorno da impostazioni | ✅ Funzionante (WidgetsBindingObserver) |
-| Richiesta permesso microfono | ✅ Funzionante (se non già concesso) |
-| App icon launcher (logo ufficiale) | ✅ Configurato con flutter_launcher_icons |
-| SafeArea rispettata (top/bottom) | ✅ Fixato |
-| Crash `AudioCaptureMode.name` | ✅ Risolto (direct enum comparison) |
-| Overflow 99793px | ✅ Risolto (SizedBox.expand + IntrinsicWidth) |
-| Shader GLSL wavefront | ✅ Inizializzato al boot (ShaderNotifier.initialize) |
-| Audio capture stream | ✅ Avviato al boot (AudioCaptureMode.external) |
-| FFT → ShaderNotifier routing | ✅ AudioNotifier._routeToShader() |
-| BassGain → shader bands 0–7 | ✅ Applicato in _routeToShader() |
-| Bending → shader uBending | ✅ InteractionController._onTick() |
-| BassPad elastico | ✅ ease-out 300ms via Ticker |
-| NavPad elastico | ✅ ease-out 450ms via Ticker |
+| Shader GLSL wavefront (SPIR-V) | ✅ Caricato correttamente |
+| Wavefront visibile a schermo | ✅ Fix: rimossa `assets/shaders/` da `flutter.assets` |
+| Shader v4 — scala 1.8x | ✅ MESH_W 0.22→0.40, FOV 0.60→0.80 |
+| Shader v4 — colore audio reattivo | ✅ energy×5.0 → arancione a volumi medi |
+| Shader v4 — aberrazione cromatica | ✅ 2× più visibile, lineare con bendLen |
+| BassPad gain | ✅ 3.0→8.0 (esplosione visiva) |
+| NavPad sensibilità bending | ✅ 1.8→5.4 (3× più reattivo) |
+| setBassGain routing zero-alloc | ✅ Campo `_bassGain` locale in AudioNotifier |
+| ForegroundService persistenza | ✅ START_STICKY + onTaskRemoved() |
+| Overlay — LAUNCH TACTICAL OVERLAY | ✅ Pulsante in OverlayDashboard con stato toggle |
+| Overlay — Z-order | ✅ TYPE_APPLICATION_OVERLAY + FLAG_NOT_FOCUSABLE |
+| DRM failover guard | ✅ hasDrmFailoverOccurred (max 1 failover/sessione) |
+| Uniform clamping (difesa in profondità) | ✅ ShaderNotifier.updateBending + updateAudio |
+| flutter analyze | ✅ 0 issues |
+
+### 🐛 Bug Risolti (Sprint 2026-04-24/25)
+
+| Bug | Root Cause | Fix |
+|---|---|---|
+| "INITIALIZING SENSORS..." infinito | `assets/shaders/` sotto `flutter.assets` sovrascriveva SPIR-V | Rimossa dalla sezione `flutter.assets` |
+| Shader non compila (SPIR-V) | `uniform float arr[32]` non supportato da impellerc | Sostituito con 8 `uniform vec4` |
+| Rettangolo bianco | `MESH_DEPTH (2.5) > CAM_Z (2.2)` → divisore → 0 → line_width → ∞ | CAM_DIST/MESH_D corretti, nuova camera model |
+| DRM loop infinito | `triggerDrmFailover()` senza guard → rilancia infinitamente se mic occupato | Flag `hasDrmFailoverOccurred` |
 
 ---
 
 *Neuralis — Neural LCARS Overlay System*
-*Roadmap V.1.4 — Aggiornata 2026-04-24 — Sezione 5 Completata*
+*Roadmap V.1.5 — Aggiornata 2026-04-25 — Sprint Performance & UX Completato*
