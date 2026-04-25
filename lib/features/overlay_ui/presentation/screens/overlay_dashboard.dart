@@ -460,8 +460,8 @@ class _ModeButton extends StatelessWidget {
       onTap:    onTap,
       color:    color,
       isActive: !isActive,
-      width:    70,
-      height:   20,
+      width:    90,
+      height:   32,
     );
   }
 }
